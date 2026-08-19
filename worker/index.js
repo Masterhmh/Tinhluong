@@ -182,7 +182,11 @@ async function sendHuongDan(env, chatId) {
     "<b>2. Cách nhập bằng tin nhắn</b>",
     "• Gõ /luongthang → bot gửi mẫu của tháng hiện tại",
     "• Gõ /luongthang 7 → mẫu tháng 7",
-    "Copy mẫu, điền số vào sau dấu hai chấm rồi gửi lại. Bot sẽ tính và trả về bảng lương.",
+    "Copy mẫu, điền số vào sau dấu hai chấm rồi gửi lại.",
+    "Bạn cứ viết tiếng Việt bình thường, ví dụ:",
+    "<code>Lương cơ bản: 9tr</code>",
+    "<code>Ngày công: 24</code>",
+    "Không cần viết đúng chính tả hay đúng dấu, bot vẫn hiểu.",
     "",
     "<b>3. Cách viết số tiền</b>",
     "Viết kiểu nào cũng được:",
@@ -191,9 +195,9 @@ async function sendHuongDan(env, chatId) {
     "Dòng nào bỏ trống hoặc không điền sẽ được tính là <b>0</b>.",
     "",
     "<b>4. Thêm khoản cộng tự đặt tên</b>",
-    "Dùng dòng <code>cong_them: Tên khoản | Số tiền</code>",
-    "Ví dụ: <code>cong_them: Hoa hồng | 500k</code>",
-    "Có thể thêm nhiều dòng <code>cong_them</code>.",
+    "Dùng dòng <code>Cộng thêm: Tên khoản | Số tiền</code>",
+    "Ví dụ: <code>Cộng thêm: Hoa hồng | 500k</code>",
+    "Có thể thêm nhiều dòng <b>Cộng thêm</b>.",
     "",
     "<b>5. Cách bot tính lương</b>",
     "• Ngày làm việc = số ngày trong tháng − số ngày Chủ nhật",
@@ -205,11 +209,11 @@ async function sendHuongDan(env, chatId) {
     "",
     sep,
     "<b>📋 DANH SÁCH LỆNH</b>",
-    "/huongdan — xem hướng dẫn này",
-    "/ping — kiểm tra bot còn hoạt động",
-    "/miniapp — bật lại nút Mini App",
     "/luongthang — mẫu nhập của tháng hiện tại",
     "/luongthang 7 — mẫu nhập tháng 7",
+    "/miniapp — bật lại nút Mini App",
+    "/huongdan — xem hướng dẫn này",
+    "/ping — kiểm tra bot còn hoạt động",
     sep,
   ].join("\n");
 
@@ -220,47 +224,130 @@ async function sendSalaryTemplate(env, chatId, month) {
   const year = getCurrentYearVN();
   const info = getWorkingInfo(year, month);
 
-  const form = [
-    "luongthang: " + month,
-    "luong_co_ban:",
-    "ngay_cong:",
-    "he_so_trach_nhiem:",
-    "tien_an_1_buoi:",
-    "tro_cap:",
-    "cong_tac_phi:",
-    "thuong_nong:",
-    "tang_ca:",
-    "upsell:",
-    "di_muon:",
-    "phat:",
-    "ung_luong:",
+  const formCoBan = [
+    "Tháng: " + month,
+    "Lương cơ bản:",
+    "Ngày công:",
+    "Tiền ăn 1 buổi:",
+    "Hệ số trách nhiệm:",
+  ].join("\n");
+
+  const formViDu = [
+    "Tháng: " + month,
+    "Lương cơ bản: 9tr",
+    "Ngày công: 24",
+    "Tiền ăn 1 buổi: 30k",
+    "Hệ số trách nhiệm: 0.03",
+  ].join("\n");
+
+  const formThem = [
+    "Trợ cấp:",
+    "Công tác phí:",
+    "Thưởng nóng:",
+    "Tăng ca:",
+    "Upsell:",
+    "Cộng thêm: Hoa hồng | 500k",
+    "Đi muộn:",
+    "Phạt:",
+    "Ứng lương:",
   ].join("\n");
 
   const text = [
-    `<b>📌 MẪU TÍNH LƯƠNG THÁNG ${pad2(month)}/${year}</b>`,
-    `Tháng này có <b>${info.totalDays} ngày</b>, trong đó <b>${info.sundayCount} ngày Chủ nhật</b> → <b>${info.workingDays} ngày làm việc</b>.`,
+    `<b>📌 TÍNH LƯƠNG THÁNG ${pad2(month)}/${year}</b>`,
+    `Tháng này có <b>${info.totalDays} ngày</b> · <b>${info.sundayCount} ngày Chủ nhật</b> · <b>${info.workingDays} ngày làm việc</b>`,
     "",
-    "<b>Bước 1.</b> Bấm vào khối dưới để copy:",
-    `<pre>${form}</pre>`,
-    "<b>Bước 2.</b> Điền số vào sau dấu hai chấm rồi gửi lại cho mình.",
+    "<b>Cách dùng rất đơn giản:</b>",
+    "Bấm vào khối chữ để copy → điền số vào sau dấu hai chấm → gửi lại cho mình.",
+    "Viết tiếng Việt bình thường, có dấu cũng được.",
     "",
-    "<b>Muốn thêm khoản cộng khác?</b> Thêm dòng:",
-    "<code>cong_them: Hoa hồng | 500k</code>",
-    "<code>cong_them: Bonus dự án | 1tr</code>",
+    "<b>① Chỉ cần 5 dòng này</b>",
+    `<pre>${formCoBan}</pre>`,
+    "<b>② Chưa rõ? Copy ví dụ này gửi thử ngay</b>",
+    `<pre>${formViDu}</pre>`,
+    "<b>③ Có khoản khác thì thêm dòng cần dùng</b>",
+    `<pre>${formThem}</pre>`,
     "",
-    "<b>Lưu ý</b>",
-    "• Tiền viết kiểu nào cũng được: 9tr, 1tr2, 500k, 1.200.000",
-    "• Dòng bỏ trống được tính là 0",
-    "• Phụ cấp trách nhiệm = hệ số × lương ngày công",
+    "<b>💡 Giải thích từng dòng</b>",
+    "• <b>Lương cơ bản</b> — lương 1 tháng ghi trên hợp đồng",
+    "• <b>Ngày công</b> — số ngày bạn thực tế đi làm trong tháng",
+    "• <b>Tiền ăn 1 buổi</b> — bot tự nhân với số ngày công",
+    "• <b>Hệ số trách nhiệm</b> — không có thì để trống hoặc ghi 0",
+    "• <b>Cộng thêm</b> — khoản tự đặt tên, viết <code>Tên | Số tiền</code>",
     "",
-    "💡 Nhập trên Mini App sẽ nhanh hơn — bấm nút bên dưới.",
+    "<b>Số tiền viết kiểu nào cũng hiểu</b>",
+    "<code>9tr</code> · <code>1tr2</code> · <code>500k</code> · <code>1200000</code> · <code>1.200.000</code>",
+    "Dòng nào để trống hoặc xoá đi thì tính là 0.",
+    "",
+    "🧮 Không muốn gõ? Bấm nút dưới để nhập trên Mini App.",
   ].join("\n");
 
   return sendMessage(env, chatId, text, miniAppKeyboard(env), "HTML");
 }
 
+const KEY_MAP = {
+  thang: "luongthang",
+  luongthang: "luongthang",
+  thang_luong: "luongthang",
+  nam: "nam",
+
+  luong_co_ban: "luong_co_ban",
+  luong_co_ban_thang: "luong_co_ban",
+  luong_cb: "luong_co_ban",
+
+  ngay_cong: "ngay_cong",
+  ngay_cong_thuc_te: "ngay_cong",
+  so_ngay_cong: "ngay_cong",
+  ngay_di_lam: "ngay_cong",
+
+  he_so_trach_nhiem: "he_so_trach_nhiem",
+  he_so: "he_so_trach_nhiem",
+  hs_trach_nhiem: "he_so_trach_nhiem",
+
+  tien_an_1_buoi: "tien_an_1_buoi",
+  tien_an: "tien_an_1_buoi",
+  tien_an_1_ngay: "tien_an_1_buoi",
+
+  tro_cap: "tro_cap",
+  phu_cap: "tro_cap",
+  cong_tac_phi: "cong_tac_phi",
+  thuong_nong: "thuong_nong",
+  thuong: "thuong_nong",
+  tang_ca: "tang_ca",
+  lam_them_gio: "tang_ca",
+  upsell: "upsell",
+
+  di_muon: "di_muon",
+  tru_di_muon: "di_muon",
+  phat: "phat",
+  ung_luong: "ung_luong",
+  tam_ung: "ung_luong",
+
+  cong_them: "cong_them",
+  khoan_cong_them: "cong_them",
+  khoan_khac: "cong_them",
+};
+
+function normalizeKey(raw) {
+  return String(raw)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/gi, "d")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function canonicalKey(raw) {
+  const k = normalizeKey(raw);
+  return KEY_MAP[k] || k;
+}
+
 function looksLikeSalaryForm(text) {
-  return /luongthang\s*:/i.test(text) || /luong_co_ban\s*:/i.test(text);
+  return text.split("\n").some((line) => {
+    const idx = line.indexOf(":");
+    if (idx === -1) return false;
+    return Boolean(KEY_MAP[normalizeKey(line.slice(0, idx))]);
+  });
 }
 
 function parseSalaryForm(text) {
@@ -274,7 +361,7 @@ function parseSalaryForm(text) {
     const idx = rawLine.indexOf(":");
     if (idx === -1) return;
 
-    const key = rawLine.slice(0, idx).trim().toLowerCase();
+    const key = canonicalKey(rawLine.slice(0, idx));
     const value = rawLine.slice(idx + 1).trim();
 
     if (key === "cong_them") {
