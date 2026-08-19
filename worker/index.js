@@ -205,11 +205,11 @@ async function sendHuongDan(env, chatId) {
     "",
     sep,
     "<b>📋 DANH SÁCH LỆNH</b>",
-    "/luongthang — mẫu nhập của tháng hiện tại",
-    "/luongthang 7 — mẫu nhập tháng 7",
-    "/miniapp — bật lại nút Mini App",
     "/huongdan — xem hướng dẫn này",
     "/ping — kiểm tra bot còn hoạt động",
+    "/miniapp — bật lại nút Mini App",
+    "/luongthang — mẫu nhập của tháng hiện tại",
+    "/luongthang 7 — mẫu nhập tháng 7",
     sep,
   ].join("\n");
 
