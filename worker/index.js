@@ -4,6 +4,18 @@ export default {
       return new Response("Telegram salary bot is running.");
     }
 
+    const url = new URL(request.url);
+
+    if (request.method === "OPTIONS") {
+      return new Response("OK", {
+        headers: corsHeaders(),
+      });
+    }
+
+    if (request.method === "POST" && url.pathname === "/miniapp-data") {
+      return handleMiniAppPost(request, env);
+    }
+
     if (request.method !== "POST") {
       return new Response("Method not allowed", { status: 405 });
     }
@@ -51,8 +63,25 @@ async function handleUpdate(update, env) {
     return;
   }
 
-  if (text === "/ping") {
+  if (text === "/ping" || text.startsWith("/ping@")) {
     return sendMessage(env, chatId, "pong");
+  }
+
+  if (text === "/miniapp" || text.startsWith("/miniapp@")) {
+    await setMenuButton(env);
+
+    return sendMessage(
+      env,
+      chatId,
+      [
+        "✅ Đã bật nút Mini App.",
+        "",
+        "Nếu chưa thấy nút menu, hãy đóng Telegram rồi mở lại.",
+        "",
+        "Bạn cũng có thể bấm nút bên dưới để mở Mini App ngay.",
+      ].join("\n"),
+      miniAppKeyboard(env)
+    );
   }
 
   if (msg.web_app_data && msg.web_app_data.data) {
@@ -74,6 +103,7 @@ async function handleUpdate(update, env) {
         "",
         "Lệnh hỗ trợ:",
         "/ping",
+        "/miniapp",
         "/luongthang",
         "/luongthang 7",
         "/luongthang07",
@@ -147,10 +177,11 @@ async function sendHelp(env, chatId) {
       "📘 Hướng dẫn dùng bot tính lương",
       "",
       "Mở giao diện Mini App:",
-      "Bấm nút bên dưới.",
+      "Bấm nút bên dưới hoặc dùng lệnh /miniapp.",
       "",
-      "Hoặc dùng lệnh:",
+      "Lệnh hỗ trợ:",
       "/ping",
+      "/miniapp",
       "/luongthang",
       "/luongthang 7",
       "/luongthang07",
@@ -200,7 +231,6 @@ async function sendSalaryTemplate(env, chatId, month) {
     "- Dòng cong_them có dạng: Tên khoản | Số tiền",
   ].join("\n");
 
-  // Không dùng Markdown để tránh lỗi dấu "_" trong Telegram.
   return sendMessage(env, chatId, text, miniAppKeyboard(env));
 }
 
@@ -274,7 +304,55 @@ async function handleMiniAppData(chatId, rawData, env) {
     return sendMessage(env, chatId, "❌ Không đọc được dữ liệu từ Mini App.");
   }
 
-  const input = {
+  const input = normalizeMiniAppInput(data);
+  const result = calculateSalary(input);
+
+  return sendMessage(env, chatId, formatSalaryResult(result));
+}
+
+async function handleMiniAppPost(request, env) {
+  let body;
+
+  try {
+    body = await request.json();
+  } catch (err) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: "Invalid JSON",
+      },
+      400
+    );
+  }
+
+  console.log("MINIAPP POST:", JSON.stringify(body));
+
+  const user = body.user || {};
+  const chatId = user.id || body.chatId;
+
+  if (!chatId) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: "Missing chatId",
+      },
+      400
+    );
+  }
+
+  const data = body.data || body;
+  const input = normalizeMiniAppInput(data);
+  const result = calculateSalary(input);
+
+  await sendMessage(env, chatId, formatSalaryResult(result));
+
+  return jsonResponse({
+    ok: true,
+  });
+}
+
+function normalizeMiniAppInput(data) {
+  return {
     month: Number(data.month || getCurrentMonthVN()),
 
     baseSalary: Number(data.baseSalary || data.lcb || 0),
@@ -297,9 +375,6 @@ async function handleMiniAppData(chatId, rawData, env) {
     penalty: Number(data.penalty || data.ph || 0),
     advance: Number(data.advance || data.ung || 0),
   };
-
-  const result = calculateSalary(input);
-  return sendMessage(env, chatId, formatSalaryResult(result));
 }
 
 function calculateSalary(input) {
@@ -509,6 +584,56 @@ function pad2(n) {
 
 function fmt(n) {
   return `${new Intl.NumberFormat("vi-VN").format(Math.round(n || 0))} ₫`;
+}
+
+function corsHeaders() {
+  return {
+    "access-control-allow-origin": "*",
+    "access-control-allow-methods": "GET, POST, OPTIONS",
+    "access-control-allow-headers": "content-type",
+  };
+}
+
+function jsonResponse(data, status) {
+  return new Response(JSON.stringify(data), {
+    status: status || 200,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      ...corsHeaders(),
+    },
+  });
+}
+
+async function setMenuButton(env) {
+  if (!env.BOT_TOKEN || !env.MINI_APP_URL) {
+    console.log("Cannot set menu button: missing BOT_TOKEN or MINI_APP_URL");
+    return;
+  }
+
+  const apiUrl =
+    "https://api.telegram.org/bot" + env.BOT_TOKEN + "/setChatMenuButton";
+
+  const payload = {
+    menu_button: {
+      type: "web_app",
+      text: "Tính lương",
+      web_app: {
+        url: env.MINI_APP_URL,
+      },
+    },
+  };
+
+  const res = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const text = await res.text();
+  console.log("setChatMenuButton status:", res.status);
+  console.log("setChatMenuButton response:", text);
 }
 
 async function sendMessage(env, chatId, text, replyMarkup, parseMode) {
