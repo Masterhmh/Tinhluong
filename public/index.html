@@ -210,6 +210,7 @@ select {
   border-top: 1px solid rgba(255, 255, 255, 0.18);
   font-size: 13px;
   font-weight: 600;
+  line-height: 1.6;
   opacity: 0.92;
 }
 
@@ -399,6 +400,21 @@ input:focus {
 input.bad {
   border-color: var(--bad);
   background: rgba(239, 68, 68, 0.1);
+}
+
+.note {
+  margin-top: 8px;
+  border-radius: 12px;
+  padding: 9px 11px;
+  background: rgba(59, 130, 246, 0.09);
+  color: var(--hint);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.note b {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 .chips {
@@ -795,11 +811,7 @@ body.typing .bar-done {
         <div class="field">
           <label>Hệ số trách nhiệm <span class="unit">mặc định 0</span></label>
           <input type="text" inputmode="decimal" data-k="hs" data-chips="0,0.02,0.03,0.05" placeholder="0">
-        </div>
-
-        <div class="field">
-          <label>Mức cơ sở tính trách nhiệm <span class="unit">trống = lương cơ bản</span></label>
-          <input type="text" inputmode="decimal" data-k="mcs" data-money placeholder="= lương cơ bản">
+          <div class="note" id="noteMcs">Mức cơ sở tính trách nhiệm tự động = lương ngày công.</div>
         </div>
 
         <div class="field">
@@ -1090,7 +1102,7 @@ $$("input[data-chips]").forEach(function (inp) {
     box.appendChild(b);
   });
 
-  inp.parentNode.appendChild(box);
+  inp.parentNode.insertBefore(box, inp.nextSibling);
 });
 
 function docExtraCong() {
@@ -1167,11 +1179,14 @@ function tinhLuong(inp, thang) {
   var lcb = inp.lcb || 0;
   var nc = inp.nc || 0;
   var hs = inp.hs || 0;
-  var mcs = inp.mcs || lcb;
 
   var luongNgay = w.lv > 0 ? lcb / w.lv : 0;
   var luongNgayCong = Math.round(luongNgay * nc);
+
+  // Mức cơ sở tính trách nhiệm = lương cơ bản / ngày làm việc × ngày công thực tế
+  var mcs = luongNgayCong;
   var tienTN = Math.round(hs * mcs);
+
   var tienAn = Math.round((inp.ta || 0) * nc);
 
   var extraCong = inp.extraCong || [];
@@ -1264,7 +1279,20 @@ function render(r) {
   $("#heroSub").textContent = "Tháng " + thang + " · " + nam;
 
   $("#infoLine").textContent =
-    r.ngayLV + " ngày làm việc · " + r.cn + " CN · " + fmt(r.luongNgay) + " / ngày";
+    r.tongNgay +
+    " ngày trong tháng • " +
+    r.ngayLV +
+    " ngày làm việc • " +
+    r.cn +
+    " ngày Chủ nhật • " +
+    fmt(r.luongNgay) +
+    "/ngày";
+
+  $("#noteMcs").innerHTML =
+    "Mức cơ sở tính trách nhiệm tự động = lương ngày công: <b>" +
+    fmt(r.mcs) +
+    "</b>" +
+    (r.hs ? " → phụ cấp <b>" + fmt(r.tienTN) + "</b>" : "");
 
   if (r.tongTru > 0 && r.tongCong > 0) {
     var pTru = Math.max(0, Math.min(100, (r.tongTru / r.tongCong) * 100));
@@ -1308,7 +1336,7 @@ function render(r) {
   }
 
   row("Lương ngày công (" + r.nc + " / " + r.ngayLV + " ngày)", r.luongNgayCong);
-  row("Trách nhiệm (HS " + r.hs + " × " + fmt(r.mcs) + ")", r.tienTN);
+  row("Trách nhiệm (HS " + r.hs + " × lương ngày công)", r.tienTN);
   row("Tiền ăn (" + r.nc + " buổi × " + fmt(r.ta) + ")", r.tienAn);
   row("Trợ cấp", r.tc);
   row("Công tác phí", r.ctp);
@@ -1402,11 +1430,13 @@ document.addEventListener("input", function (e) {
   var el = e.target;
 
   if (el.matches && el.matches("input[data-chips]")) {
-    var chips = el.parentNode.querySelectorAll(".chip");
+    var box = el.parentNode.querySelector(".chips");
 
-    Array.prototype.forEach.call(chips, function (x) {
-      x.classList.remove("on");
-    });
+    if (box) {
+      Array.prototype.forEach.call(box.querySelectorAll(".chip"), function (x) {
+        x.classList.remove("on");
+      });
+    }
   }
 
   if (el.id === "ncRange") {
@@ -1501,7 +1531,6 @@ function payloadBot() {
     lcb: cur.lcb || 0,
     nc: cur.nc || 0,
     hs: cur.hs || 0,
-    mcs: cur.mcs || 0,
     ta: cur.ta || 0,
 
     tc: cur.tc || 0,
@@ -1688,7 +1717,7 @@ function xuatAnh() {
     drawFit(ctx, b, x + 70, y + 64, 14, 500, "#6b7280", w - 92);
   }
 
-  pill(60, 380, 470, "🗓️", cur.ngayLV + " ngày làm việc", cur.cn + " CN · " + cur.tongNgay + " ngày trong tháng");
+  pill(60, 380, 470, "🗓️", cur.ngayLV + " ngày làm việc", cur.tongNgay + " ngày trong tháng · " + cur.cn + " ngày Chủ nhật");
   pill(550, 380, 470, "💵", fmt(cur.luongNgay), "Lương / Ngày");
   pill(60, 486, 470, "✅", cur.nc + " ngày công", "Thực tế");
   pill(550, 486, 470, "💼", fmt(cur.lcb), "Lương cơ bản / Tháng");
@@ -1867,7 +1896,7 @@ document.addEventListener("keydown", function (e) {
 });
 
 /* ===== Tự lưu dữ liệu tạm ===== */
-var LUU_KEY = "tinhluong_cache_v1";
+var LUU_KEY = "tinhluong_cache_v2";
 var CACHE_PHUT = 2; // đổi số này để tăng/giảm thời gian giữ dữ liệu
 var timerLuu = null;
 
