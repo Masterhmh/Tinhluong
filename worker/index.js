@@ -186,18 +186,17 @@ async function sendHuongDan(env, chatId) {
     "Bạn cứ viết tiếng Việt bình thường, ví dụ:",
     "<code>Lương cơ bản: 9tr</code>",
     "<code>Ngày công: 24</code>",
-    "Không cần viết đúng chính tả hay đúng dấu, bot vẫn hiểu.",
+    "Không cần viết đúng dấu, bot vẫn hiểu. Dòng nào không điền thì tính là <b>0</b>.",
     "",
     "<b>3. Cách viết số tiền</b>",
     "Viết kiểu nào cũng được:",
     "<code>9tr</code> = 9.000.000 • <code>1tr2</code> = 1.200.000",
     "<code>500k</code> = 500.000 • <code>1200000</code> • <code>1.200.000</code>",
-    "Dòng nào bỏ trống hoặc không điền sẽ được tính là <b>0</b>.",
     "",
     "<b>4. Thêm khoản cộng tự đặt tên</b>",
     "Dùng dòng <code>Cộng thêm: Tên khoản | Số tiền</code>",
     "Ví dụ: <code>Cộng thêm: Hoa hồng | 500k</code>",
-    "Có thể thêm nhiều dòng <b>Cộng thêm</b>.",
+    "Có thể thêm nhiều dòng <b>Cộng thêm</b> khác nhau.",
     "",
     "<b>5. Cách bot tính lương</b>",
     "• Ngày làm việc = số ngày trong tháng − số ngày Chủ nhật",
@@ -224,29 +223,18 @@ async function sendSalaryTemplate(env, chatId, month) {
   const year = getCurrentYearVN();
   const info = getWorkingInfo(year, month);
 
-  const formCoBan = [
+  const form = [
     "Tháng: " + month,
     "Lương cơ bản:",
     "Ngày công:",
-    "Tiền ăn 1 buổi:",
     "Hệ số trách nhiệm:",
-  ].join("\n");
-
-  const formViDu = [
-    "Tháng: " + month,
-    "Lương cơ bản: 9tr",
-    "Ngày công: 24",
-    "Tiền ăn 1 buổi: 30k",
-    "Hệ số trách nhiệm: 0.03",
-  ].join("\n");
-
-  const formThem = [
+    "Tiền ăn 1 buổi:",
     "Trợ cấp:",
     "Công tác phí:",
     "Thưởng nóng:",
     "Tăng ca:",
     "Upsell:",
-    "Cộng thêm: Hoa hồng | 500k",
+    "Cộng thêm: Hoa hồng | 0",
     "Đi muộn:",
     "Phạt:",
     "Ứng lương:",
@@ -256,27 +244,20 @@ async function sendSalaryTemplate(env, chatId, month) {
     `<b>📌 TÍNH LƯƠNG THÁNG ${pad2(month)}/${year}</b>`,
     `Tháng này có <b>${info.totalDays} ngày</b> · <b>${info.sundayCount} ngày Chủ nhật</b> · <b>${info.workingDays} ngày làm việc</b>`,
     "",
-    "<b>Cách dùng rất đơn giản:</b>",
-    "Bấm vào khối chữ để copy → điền số vào sau dấu hai chấm → gửi lại cho mình.",
-    "Viết tiếng Việt bình thường, có dấu cũng được.",
-    "",
-    "<b>① Chỉ cần 5 dòng này</b>",
-    `<pre>${formCoBan}</pre>`,
-    "<b>② Chưa rõ? Copy ví dụ này gửi thử ngay</b>",
-    `<pre>${formViDu}</pre>`,
-    "<b>③ Có khoản khác thì thêm dòng cần dùng</b>",
-    `<pre>${formThem}</pre>`,
-    "",
-    "<b>💡 Giải thích từng dòng</b>",
+    "Bấm vào khối dưới để copy → điền số vào sau dấu hai chấm → gửi lại cho mình.",
+    "<b>Dòng nào không điền thì mặc định là 0.</b>",
+    `<pre>${form}</pre>`,
+    "<b>💡 Giải thích</b>",
     "• <b>Lương cơ bản</b> — lương 1 tháng ghi trên hợp đồng",
     "• <b>Ngày công</b> — số ngày bạn thực tế đi làm trong tháng",
+    "• <b>Hệ số trách nhiệm</b> — ví dụ 0.03, không có thì để trống",
     "• <b>Tiền ăn 1 buổi</b> — bot tự nhân với số ngày công",
-    "• <b>Hệ số trách nhiệm</b> — không có thì để trống hoặc ghi 0",
-    "• <b>Cộng thêm</b> — khoản tự đặt tên, viết <code>Tên | Số tiền</code>",
+    "• <b>Cộng thêm</b> — khoản tự đặt tên, viết <code>Tên khoản | Số tiền</code>",
+    "  Ví dụ <code>Cộng thêm: Hoa hồng | 500k</code>",
+    "  Thêm được nhiều dòng, khoản nào để 0 hoặc xoá đi thì bỏ qua",
     "",
     "<b>Số tiền viết kiểu nào cũng hiểu</b>",
     "<code>9tr</code> · <code>1tr2</code> · <code>500k</code> · <code>1200000</code> · <code>1.200.000</code>",
-    "Dòng nào để trống hoặc xoá đi thì tính là 0.",
     "",
     "🧮 Không muốn gõ? Bấm nút dưới để nhập trên Mini App.",
   ].join("\n");
@@ -371,7 +352,7 @@ function parseSalaryForm(text) {
 
       if (amount > 0) {
         extraCong.push({
-          name,
+          name: name || "Khoản cộng khác",
           value: amount,
         });
       }
