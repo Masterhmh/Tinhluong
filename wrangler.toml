@@ -1,0 +1,6 @@
+name = "telegram-salary-bot"
+main = "worker/index.js"
+compatibility_date = "2026-08-19"
+
+[vars]
+MINI_APP_URL = "https://tinhluong-4x1.pages.dev"
