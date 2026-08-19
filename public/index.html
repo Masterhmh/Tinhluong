@@ -685,6 +685,21 @@ input[type="range"] {
   cursor: not-allowed;
 }
 
+.bar-done {
+  display: none;
+  flex: none;
+  margin-left: auto;
+}
+
+body.typing .bar .v,
+body.typing .bar-actions {
+  display: none;
+}
+
+body.typing .bar-done {
+  display: block;
+}
+
 @media (max-width: 520px) {
   .bar-actions {
     gap: 6px;
@@ -740,7 +755,7 @@ input[type="range"] {
 
   <div class="hero">
     <div class="hero-top">
-      <div class="hero-title">BẢNG LƯƠNG</div>
+      <div class="hero-title">💰 BẢNG LƯƠNG</div>
       <div class="month-picker">
         <button type="button" id="mPrev">‹</button>
         <select id="mThang"></select>
@@ -885,6 +900,7 @@ input[type="range"] {
     <button class="btn secondary" id="btnAnh">Xuất ảnh</button>
     <button class="btn" id="btnGuiBot">Gửi về bot</button>
   </div>
+  <button class="btn bar-done" id="btnXong">✓ Xong</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1783,36 +1799,77 @@ function xuatAnh() {
 
 $("#btnGuiBot").addEventListener("click", guiBot);
 $("#btnAnh").addEventListener("click", xuatAnh);
-/* Bấm ra vùng trống -> ẩn bàn phím */
-function anBanPhim(e) {
+
+/* Chế độ nhập liệu: ẩn Thực nhận / Xuất ảnh / Gửi về bot, hiện nút Xong */
+var timerTyping = null;
+
+function laONhapChu(el) {
+  return (
+    el &&
+    (el.tagName === "INPUT" || el.tagName === "TEXTAREA") &&
+    el.type !== "range"
+  );
+}
+
+function batTyping() {
+  clearTimeout(timerTyping);
+  document.body.classList.add("typing");
+}
+
+function tatTyping() {
+  clearTimeout(timerTyping);
+
+  timerTyping = setTimeout(function () {
+    if (!laONhapChu(document.activeElement)) {
+      document.body.classList.remove("typing");
+    }
+  }, 120);
+}
+
+document.addEventListener("focusin", function (e) {
+  if (laONhapChu(e.target)) {
+    batTyping();
+  }
+});
+
+document.addEventListener("focusout", tatTyping);
+
+function ketThucNhap() {
   var el = document.activeElement;
 
-  if (!el) return;
+  if (el && el.blur) {
+    el.blur();
+  }
 
-  var laONhap =
-    el.tagName === "INPUT" ||
-    el.tagName === "SELECT" ||
-    el.tagName === "TEXTAREA";
+  clearTimeout(timerTyping);
+  document.body.classList.remove("typing");
+  haptic();
+  tinh();
+}
 
-  if (!laONhap) return;
+$("#btnXong").addEventListener("click", ketThucNhap);
 
-  // Nếu đang bấm vào chính ô nhập, nút, chip, tab... thì không ẩn
+/* Bấm ra vùng trống cũng ẩn bàn phím */
+function anBanPhim(e) {
+  if (!laONhapChu(document.activeElement)) return;
+
   if (e.target.closest("input, select, textarea, button, label, summary")) {
     return;
   }
 
-  el.blur();
+  ketThucNhap();
 }
 
 document.addEventListener("pointerdown", anBanPhim);
 document.addEventListener("touchstart", anBanPhim, { passive: true });
 
-/* Bấm Enter hoặc nút Done cũng ẩn bàn phím */
+/* Enter cũng ẩn bàn phím */
 document.addEventListener("keydown", function (e) {
   if (e.key === "Enter" && e.target.tagName === "INPUT") {
-    e.target.blur();
+    ketThucNhap();
   }
 });
+
 (function init() {
   if (tg) {
     tg.ready();
