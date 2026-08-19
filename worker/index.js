@@ -40,8 +40,6 @@ export default {
 };
 
 async function handleUpdate(update, env) {
-  console.log("FULL UPDATE:", JSON.stringify(update));
-
   const msg =
     update.message ||
     update.edited_message ||
@@ -272,6 +270,7 @@ function parseSalaryForm(text) {
 
   return {
     month: parseNumber(map.luongthang) || getCurrentMonthVN(),
+    year: parseNumber(map.nam) || getCurrentYearVN(),
 
     baseSalary: parseMoney(map.luong_co_ban) || 0,
     actualDays: parseNumber(map.ngay_cong) || 0,
@@ -325,8 +324,6 @@ async function handleMiniAppPost(request, env) {
     );
   }
 
-  console.log("MINIAPP POST:", JSON.stringify(body));
-
   const user = body.user || {};
   const chatId = user.id || body.chatId;
 
@@ -354,6 +351,7 @@ async function handleMiniAppPost(request, env) {
 function normalizeMiniAppInput(data) {
   return {
     month: Number(data.month || getCurrentMonthVN()),
+    year: Number(data.year || getCurrentYearVN()),
 
     baseSalary: Number(data.baseSalary || data.lcb || 0),
     actualDays: Number(data.actualDays || data.nc || 0),
@@ -378,7 +376,7 @@ function normalizeMiniAppInput(data) {
 }
 
 function calculateSalary(input) {
-  const year = getCurrentYearVN();
+  const year = Number(input.year) || getCurrentYearVN();
   const workingInfo = getWorkingInfo(year, input.month);
 
   const baseSalary = input.baseSalary || 0;
@@ -390,11 +388,11 @@ function calculateSalary(input) {
   const salaryByDay = Math.round(salaryPerDay * actualDays);
 
   const responsibilityBase = input.responsibilityBase || baseSalary;
-  const responsibility = Math.round(
-    responsibilityBase * (input.responsibilityCoef || 0)
-  );
+  const responsibilityCoef = Number(input.responsibilityCoef || 0);
+  const responsibility = Math.round(responsibilityBase * responsibilityCoef);
 
-  const meal = Math.round((input.mealPerDay || 0) * actualDays);
+  const mealPerDay = Number(input.mealPerDay || 0);
+  const meal = Math.round(mealPerDay * actualDays);
 
   const extraCong = Array.isArray(input.extraCong) ? input.extraCong : [];
   const extraCongTotal = extraCong.reduce((sum, item) => {
@@ -427,9 +425,15 @@ function calculateSalary(input) {
 
     actualDays,
 
+    baseSalary,
     salaryPerDay: Math.round(salaryPerDay),
     salaryByDay,
+
+    responsibilityCoef,
+    responsibilityBase,
     responsibility,
+
+    mealPerDay,
     meal,
 
     allowance: Number(input.allowance || 0),
@@ -467,46 +471,86 @@ function getWorkingInfo(year, month) {
 }
 
 function formatSalaryResult(r) {
-  const lines = [
-    `💰 Bảng lương tháng ${pad2(r.month)}/${r.year}`,
-    "",
-    `📅 ${r.workingDays} ngày làm việc`,
-    `${r.sundayCount} ngày chủ nhật · ${r.totalDays} ngày trong tháng`,
-    `Ngày công thực tế: ${r.actualDays}`,
-    "",
-    `Lương/ngày: ${fmt(r.salaryPerDay)}`,
-    `Lương ngày công: ${fmt(r.salaryByDay)}`,
-  ];
+  const sep = "━━━━━━━━━━━━━━━━━━━";
+  const lines = [];
 
-  if (r.responsibility) lines.push(`Trách nhiệm: ${fmt(r.responsibility)}`);
-  if (r.meal) lines.push(`Tiền ăn: ${fmt(r.meal)}`);
-  if (r.allowance) lines.push(`Trợ cấp: ${fmt(r.allowance)}`);
-  if (r.businessFee) lines.push(`Công tác phí: ${fmt(r.businessFee)}`);
-  if (r.bonus) lines.push(`Thưởng nóng: ${fmt(r.bonus)}`);
-  if (r.overtime) lines.push(`Tăng ca: ${fmt(r.overtime)}`);
-  if (r.upsell) lines.push(`Upsell: ${fmt(r.upsell)}`);
+  lines.push(sep);
+  lines.push(`💰 BẢNG LƯƠNG THÁNG ${pad2(r.month)}/${r.year}`);
+  lines.push(sep);
+  lines.push("");
+
+  lines.push("🗓 KỲ LƯƠNG");
+  lines.push(
+    `01/${pad2(r.month)}/${r.year} — ${r.totalDays}/${pad2(r.month)}/${r.year}`
+  );
+  lines.push("");
+
+  lines.push("📅 NGÀY CÔNG");
+  lines.push(`• Số ngày trong tháng: ${r.totalDays} ngày`);
+  lines.push(`• Ngày chủ nhật: ${r.sundayCount} ngày`);
+  lines.push(`• Ngày làm việc: ${r.workingDays} ngày`);
+  lines.push(`• Ngày công thực tế: ${r.actualDays} ngày`);
+  lines.push("");
+
+  lines.push("💵 CĂN CỨ TÍNH LƯƠNG");
+  lines.push(`• Lương cơ bản / tháng: ${fmt(r.baseSalary)}`);
+  lines.push(`• Lương / ngày: ${fmt(r.salaryPerDay)}`);
+  if (r.responsibilityCoef) {
+    lines.push(
+      `• Hệ số trách nhiệm: ${r.responsibilityCoef} × ${fmt(
+        r.responsibilityBase
+      )}`
+    );
+  }
+  if (r.mealPerDay) {
+    lines.push(`• Tiền ăn 1 buổi: ${fmt(r.mealPerDay)}`);
+  }
+  lines.push("");
+
+  lines.push("➕ CÁC KHOẢN CỘNG");
+  lines.push(
+    `• Lương ngày công (${r.actualDays} ngày): ${fmt(r.salaryByDay)}`
+  );
+  if (r.responsibility) {
+    lines.push(`• Phụ cấp trách nhiệm: ${fmt(r.responsibility)}`);
+  }
+  if (r.meal) {
+    lines.push(`• Tiền ăn (${r.actualDays} buổi): ${fmt(r.meal)}`);
+  }
+  if (r.allowance) lines.push(`• Trợ cấp: ${fmt(r.allowance)}`);
+  if (r.businessFee) lines.push(`• Công tác phí: ${fmt(r.businessFee)}`);
+  if (r.bonus) lines.push(`• Thưởng nóng: ${fmt(r.bonus)}`);
+  if (r.overtime) lines.push(`• Tăng ca: ${fmt(r.overtime)}`);
+  if (r.upsell) lines.push(`• Upsell: ${fmt(r.upsell)}`);
 
   if (r.extraCong && r.extraCong.length) {
-    lines.push("");
-    lines.push("Khoản cộng bổ sung:");
     r.extraCong.forEach((item) => {
       if (Number(item.value || 0) > 0) {
-        lines.push(`+ ${item.name}: ${fmt(item.value)}`);
+        lines.push(`• ${item.name}: ${fmt(item.value)}`);
       }
     });
   }
 
-  const hasMinus = r.latePenalty || r.penalty || r.advance;
-  if (hasMinus) {
-    lines.push("");
-    lines.push("Khoản trừ:");
-    if (r.latePenalty) lines.push(`- Đi muộn: ${fmt(r.latePenalty)}`);
-    if (r.penalty) lines.push(`- Phạt: ${fmt(r.penalty)}`);
-    if (r.advance) lines.push(`- Ứng lương: ${fmt(r.advance)}`);
-  }
-
+  lines.push(`▸ Tổng thu nhập: ${fmt(r.plus)}`);
   lines.push("");
-  lines.push(`✅ Thực nhận dự kiến: ${fmt(r.total)}`);
+
+  lines.push("➖ CÁC KHOẢN TRỪ");
+  if (r.minus > 0) {
+    if (r.latePenalty) lines.push(`• Đi muộn: ${fmt(r.latePenalty)}`);
+    if (r.penalty) lines.push(`• Phạt: ${fmt(r.penalty)}`);
+    if (r.advance) lines.push(`• Ứng lương: ${fmt(r.advance)}`);
+  } else {
+    lines.push("• Không có khoản trừ");
+  }
+  lines.push(`▸ Tổng khoản trừ: ${fmt(r.minus)}`);
+  lines.push("");
+
+  lines.push(sep);
+  lines.push(`✅ THỰC NHẬN: ${fmt(r.total)}`);
+  lines.push(sep);
+  lines.push("");
+  lines.push(`🕒 Lập lúc ${nowVN()}`);
+  lines.push("🤖 Bot tính lương");
 
   return lines.join("\n");
 }
@@ -528,7 +572,7 @@ function parseMoney(raw) {
 
   let m = s.match(/^(\d+(?:[.,]\d+)?)tr(\d{1,3})?$/);
   if (m) {
-    const base = parseFloat(m[1].replace(",", ".")) * 1_000_000;
+    const base = parseFloat(m[1].replace(",", ".")) * 1000000;
     let tail = m[2] || "";
     while (tail && tail.length < 3) tail += "0";
     return Math.round(base + (tail ? parseInt(tail, 10) * 1000 : 0));
@@ -576,6 +620,18 @@ function getCurrentYearVN() {
       year: "numeric",
     }).format(new Date())
   );
+}
+
+function nowVN() {
+  return new Intl.DateTimeFormat("vi-VN", {
+    timeZone: "Asia/Bangkok",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date());
 }
 
 function pad2(n) {
@@ -649,12 +705,6 @@ async function sendMessage(env, chatId, text, replyMarkup, parseMode) {
     console.log("ERROR: BOT_TOKEN is missing");
     return;
   }
-
-  const tokenPreview =
-    String(env.BOT_TOKEN).slice(0, 8) + "..." + String(env.BOT_TOKEN).slice(-6);
-
-  console.log("Sending message to chatId:", chatId);
-  console.log("BOT_TOKEN preview:", tokenPreview);
 
   const url = "https://api.telegram.org/bot" + env.BOT_TOKEN + "/sendMessage";
 
