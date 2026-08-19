@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Tính lương</title>
+<title>TÍNH LƯƠNG</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
@@ -202,16 +202,65 @@ select {
   display: none !important;
 }
 
-.info-line {
+.stats {
   position: relative;
   z-index: 1;
-  margin-top: 14px;
-  padding-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 16px;
+  padding-top: 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.18);
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.6;
-  opacity: 0.92;
+}
+
+.stat {
+  position: relative;
+  padding: 0 10px;
+  text-align: center;
+  min-width: 0;
+}
+
+.stat + .stat::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  bottom: 2px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.stat b {
+  display: block;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stat small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  opacity: 0.78;
+}
+
+@media (max-width: 420px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 1px;
+  }
+
+  .stat:nth-child(3)::before {
+    display: none;
+  }
+
+  .stat b {
+    font-size: 16px;
+  }
 }
 
 .grid {
@@ -783,7 +832,24 @@ body.typing .bar-done {
     </div>
     <div class="meter-note hide" id="meterNote"></div>
 
-    <div class="info-line" id="infoLine">—</div>
+    <div class="stats">
+      <div class="stat">
+        <b id="stTong">—</b>
+        <small>ngày trong tháng</small>
+      </div>
+      <div class="stat">
+        <b id="stLV">—</b>
+        <small>ngày làm việc</small>
+      </div>
+      <div class="stat">
+        <b id="stCN">—</b>
+        <small>ngày Chủ nhật</small>
+      </div>
+      <div class="stat">
+        <b id="stNgay">—</b>
+        <small>mỗi ngày</small>
+      </div>
+    </div>
   </div>
 
   <details class="card detail-card" id="chiTiet">
@@ -1278,15 +1344,10 @@ function render(r) {
 
   $("#heroSub").textContent = "Tháng " + thang + " · " + nam;
 
-  $("#infoLine").textContent =
-    r.tongNgay +
-    " ngày trong tháng • " +
-    r.ngayLV +
-    " ngày làm việc • " +
-    r.cn +
-    " ngày Chủ nhật • " +
-    fmt(r.luongNgay) +
-    "/ngày";
+  $("#stTong").textContent = r.tongNgay;
+  $("#stLV").textContent = r.ngayLV;
+  $("#stCN").textContent = r.cn;
+  $("#stNgay").textContent = fmt(r.luongNgay);
 
   $("#noteMcs").innerHTML =
     "Mức cơ sở tính trách nhiệm tự động = lương ngày công: <b>" +
