@@ -76,52 +76,62 @@ select {
   border-radius: 24px;
   padding: 18px;
   color: #fff;
-  background: linear-gradient(135deg, #4f46e5 0%, #0ea5e9 54%, #22d3ee 100%);
-  box-shadow: 0 16px 34px rgba(14, 165, 233, 0.28);
+  background: linear-gradient(135deg, #4f46e5 0%, #2563eb 52%, #0ea5e9 100%);
+  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.28);
 }
 
 .hero::after {
   content: "";
   position: absolute;
+  z-index: 0;
   width: 190px;
   height: 190px;
-  right: -58px;
-  top: -72px;
+  right: -84px;
+  top: -96px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .hero-top {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   z-index: 1;
 }
 
 .hero-title {
-  font-weight: 800;
+  font-size: 17px;
+  font-weight: 900;
   letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.hero-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.78;
 }
 
 .month-picker {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
 }
 
 .month-picker select {
-  height: 36px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 12px;
-  padding: 0 30px 0 12px;
-  background-color: rgba(255, 255, 255, 0.18);
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 11px;
+  padding: 0 26px 0 10px;
+  background-color: rgba(255, 255, 255, 0.12);
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 11px center;
+  background-position: right 9px center;
   color: #fff;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   appearance: none;
@@ -129,7 +139,7 @@ select {
 }
 
 .month-picker select:active {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.24);
 }
 
 .month-picker select option {
@@ -138,16 +148,20 @@ select {
 }
 
 .cap {
-  margin-top: 18px;
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  font-weight: 700;
-  opacity: 0.9;
+  position: relative;
+  z-index: 1;
+  margin-top: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 0.85;
 }
 
 .big {
-  margin-top: 4px;
+  position: relative;
+  z-index: 1;
+  margin-top: 2px;
   font-size: 36px;
   font-weight: 900;
   letter-spacing: -0.8px;
@@ -177,81 +191,26 @@ select {
   background: #fecdd3;
 }
 
-.tags {
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  margin-top: 14px;
-  z-index: 1;
-}
-
-.tag {
-  border-radius: 999px;
-  padding: 6px 11px;
-  background: rgba(255, 255, 255, 0.18);
+.meter-note {
+  margin-top: 7px;
   font-size: 12px;
   font-weight: 600;
+  opacity: 0.85;
 }
 
-.hero-detail {
+.hide {
+  display: none !important;
+}
+
+.info-line {
   position: relative;
   z-index: 1;
   margin-top: 14px;
-  padding: 12px 13px;
-  border-radius: 17px;
-  background: rgba(255, 255, 255, 0.13);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-}
-
-.hero-detail > summary {
-  cursor: pointer;
-  list-style: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  color: #fff;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
   font-size: 13px;
-  font-weight: 800;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-.hero-detail > summary::-webkit-details-marker {
-  display: none;
-}
-
-.hero-detail .row {
-  color: #fff;
-  border-bottom-color: rgba(255, 255, 255, 0.18);
-}
-
-.hero-detail .row span {
-  color: rgba(255, 255, 255, 0.75);
-}
-
-.hero-detail .row.plus b {
-  color: #bbf7d0;
-}
-
-.hero-detail .row.minus b {
-  color: #fecdd3;
-}
-
-.hero-detail .row.info b,
-.hero-detail .row.info span {
-  color: #fff;
-}
-
-.hero-detail .row.sum b,
-.hero-detail .row.sum span {
-  color: #fff;
-}
-
-.hero-detail .warn {
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff7ed;
+  font-weight: 600;
+  opacity: 0.92;
 }
 
 .grid {
@@ -289,6 +248,25 @@ select {
 .card + .tabs,
 .tabs + .panel {
   margin-top: 12px;
+}
+
+.detail-card {
+  margin-top: 14px;
+}
+
+.detail-card .more {
+  flex: none;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.detail-card[open] .more::after {
+  content: " ▴";
+}
+
+.detail-card:not([open]) .more::after {
+  content: " ▾";
 }
 
 .card h3,
@@ -369,6 +347,8 @@ select {
 details.card > summary {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 12px;
   cursor: pointer;
   list-style: none;
 }
@@ -580,6 +560,10 @@ input[type="range"] {
   }
 }
 
+#rows {
+  margin-top: 6px;
+}
+
 .row {
   display: flex;
   justify-content: space-between;
@@ -764,32 +748,36 @@ body.typing .bar-done {
 
   <div class="hero">
     <div class="hero-top">
-      <div class="hero-title">BẢNG LƯƠNG</div>
+      <div>
+        <div class="hero-title">BẢNG LƯƠNG</div>
+        <div class="hero-sub" id="heroSub">—</div>
+      </div>
       <div class="month-picker">
         <select id="mThang"></select>
         <select id="mNam"></select>
       </div>
     </div>
 
-    <div class="cap">Tổng thực nhận dự kiến</div>
+    <div class="cap">Thực nhận dự kiến</div>
     <div class="big" id="tong">0 ₫</div>
 
-    <div class="meter">
+    <div class="meter hide" id="meter">
       <i class="p" id="mP" style="width:0"></i>
       <i class="m" id="mM" style="width:0"></i>
     </div>
+    <div class="meter-note hide" id="meterNote"></div>
 
-    <div class="tags">
-      <div class="tag" id="tgNgay">—</div>
-      <div class="tag" id="tgNgayLuong">—</div>
-    </div>
-
-    <details class="hero-detail">
-      <summary><span>🧾 Chi tiết bảng lương</span><span>Xem ▾</span></summary>
-      <div id="rows"></div>
-      <div id="canhBao"></div>
-    </details>
+    <div class="info-line" id="infoLine">—</div>
   </div>
+
+  <details class="card detail-card" id="chiTiet">
+    <summary>
+      <span>🧾 Chi tiết bảng lương</span>
+      <span class="more">Xem</span>
+    </summary>
+    <div id="rows"></div>
+    <div id="canhBao"></div>
+  </details>
 
   <div class="grid">
     <div class="col">
@@ -969,6 +957,20 @@ function parseMoney(raw) {
 
 function fmt(n) {
   return new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
+}
+
+function fmtGon(n) {
+  var v = Math.round(n || 0);
+
+  if (v >= 1000000) {
+    return (v / 1000000).toFixed(v % 1000000 === 0 ? 0 : 1).replace(".", ",") + "tr";
+  }
+
+  if (v >= 1000) {
+    return Math.round(v / 1000) + "k";
+  }
+
+  return String(v);
 }
 
 function chiSo(s) {
@@ -1256,13 +1258,30 @@ function animate(to) {
 function render(r) {
   animate(r.thucNhan);
 
-  $("#tgNgay").textContent = r.ngayLV + " ngày làm việc · " + r.cn + " CN";
-  $("#tgNgayLuong").textContent = fmt(r.luongNgay) + " / ngày";
+  var thang = parseInt(r.thang.slice(5), 10);
+  var nam = r.thang.slice(0, 4);
 
-  var t = Math.max(1, r.tongCong);
+  $("#heroSub").textContent = "Tháng " + thang + " · " + nam;
 
-  $("#mP").style.width = Math.max(0, Math.min(100, ((r.tongCong - r.tongTru) / t) * 100)) + "%";
-  $("#mM").style.width = Math.max(0, Math.min(100, (r.tongTru / t) * 100)) + "%";
+  $("#infoLine").textContent =
+    r.ngayLV + " ngày làm việc · " + r.cn + " CN · " + fmt(r.luongNgay) + " / ngày";
+
+  if (r.tongTru > 0 && r.tongCong > 0) {
+    var pTru = Math.max(0, Math.min(100, (r.tongTru / r.tongCong) * 100));
+
+    $("#mP").style.width = 100 - pTru + "%";
+    $("#mM").style.width = pTru + "%";
+
+    $("#meterNote").textContent =
+      "Cộng " + fmtGon(r.tongCong) + " · Trừ " + fmtGon(r.tongTru);
+
+    $("#meter").classList.remove("hide");
+    $("#meterNote").classList.remove("hide");
+  } else {
+    $("#meter").classList.add("hide");
+    $("#meterNote").classList.add("hide");
+  }
+
   $("#sumFix").textContent = r.lcb ? fmt(r.lcb) : "chưa nhập";
 
   var html = "";
@@ -1639,16 +1658,16 @@ function xuatAnh() {
 
   var g = ctx.createLinearGradient(60, 56, 1020, 336);
   g.addColorStop(0, "#4f46e5");
-  g.addColorStop(0.52, "#1687e8");
-  g.addColorStop(1, "#20c7da");
+  g.addColorStop(0.52, "#2563eb");
+  g.addColorStop(1, "#0ea5e9");
 
   ctx.fillStyle = g;
   roundRect(ctx, 60, 60, 960, 290, 38);
   ctx.fill();
 
-  ctx.fillStyle = "rgba(255,255,255,.16)";
+  ctx.fillStyle = "rgba(255,255,255,.14)";
   ctx.beginPath();
-  ctx.arc(935, 40, 135, 0, Math.PI * 2);
+  ctx.arc(960, 26, 130, 0, Math.PI * 2);
   ctx.fill();
 
   drawText(ctx, "BẢNG LƯƠNG", 100, 128, 30, 800, "#ffffff");
