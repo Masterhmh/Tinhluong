@@ -236,6 +236,11 @@ select {
   color: #fecdd3;
 }
 
+.hero-detail .row.info b,
+.hero-detail .row.info span {
+  color: #fff;
+}
+
 .hero-detail .row.sum b,
 .hero-detail .row.sum span {
   color: #fff;
@@ -531,6 +536,10 @@ input[type="range"] {
 
 .row.minus b {
   color: var(--bad);
+}
+
+.row.info b {
+  color: var(--text);
 }
 
 .row.sum {
@@ -1177,6 +1186,13 @@ function render(r) {
       "</b></div>";
   }
 
+  if (r.lcb) {
+    html +=
+      '<div class="row info"><span>Lương cơ bản / tháng</span><b>' +
+      fmt(r.lcb) +
+      "</b></div>";
+  }
+
   row("Lương ngày công (" + r.nc + " / " + r.ngayLV + " ngày)", r.luongNgayCong);
   row("Trách nhiệm (HS " + r.hs + " × " + fmt(r.mcs) + ")", r.tienTN);
   row("Tiền ăn (" + r.nc + " buổi × " + fmt(r.ta) + ")", r.tienAn);
@@ -1463,6 +1479,31 @@ function guiBot() {
     });
 }
 
+function laDesktop() {
+  var plat = tg && tg.platform ? String(tg.platform).toLowerCase() : "";
+
+  if (plat) {
+    return !(plat === "android" || plat === "ios");
+  }
+
+  return !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+function drawFit(ctx, text, x, y, size, weight, color, maxWidth) {
+  var s = size;
+
+  ctx.font = weight + " " + s + 'px "Be Vietnam Pro", Arial, sans-serif';
+
+  while (ctx.measureText(text).width > maxWidth && s > 10) {
+    s -= 1;
+    ctx.font = weight + " " + s + 'px "Be Vietnam Pro", Arial, sans-serif';
+  }
+
+  ctx.fillStyle = color;
+  ctx.textAlign = "left";
+  ctx.fillText(text, x, y);
+}
+
 function drawText(ctx, text, x, y, size, weight, color, align) {
   ctx.font = (weight || 400) + " " + size + 'px "Be Vietnam Pro", Arial, sans-serif';
   ctx.fillStyle = color || "#111827";
@@ -1488,12 +1529,18 @@ function xuatAnh() {
 
   var rows = [];
 
+  rows.push({
+    label: "Lương cơ bản / tháng",
+    val: cur.lcb,
+    type: "info"
+  });
+
   function add(label, val, minus) {
     if (val) {
       rows.push({
         label: label,
         val: val,
-        minus: !!minus
+        type: minus ? "minus" : "plus"
       });
     }
   }
@@ -1519,7 +1566,7 @@ function xuatAnh() {
   var ctx = c.getContext("2d");
 
   c.width = 1080;
-  c.height = Math.max(1040, 610 + rows.length * 72);
+  c.height = Math.max(1120, 900 + rows.length * 72);
 
   ctx.fillStyle = "#f5f7fb";
   ctx.fillRect(0, 0, c.width, c.height);
@@ -1550,43 +1597,67 @@ function xuatAnh() {
 
   function pill(x, y, w, icon, a, b) {
     ctx.fillStyle = "#ffffff";
-    roundRect(ctx, x, y, w, 76, 24);
+    roundRect(ctx, x, y, w, 86, 24);
     ctx.fill();
 
     ctx.strokeStyle = "#e6eaf2";
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    drawText(ctx, icon, x + 24, y + 48, 26, 700, "#2783de");
-    drawText(ctx, a, x + 64, y + 32, 18, 700, "#111827");
-    drawText(ctx, b, x + 64, y + 56, 15, 500, "#6b7280");
+    drawText(ctx, icon, x + 26, y + 54, 26, 700, "#2783de");
+    drawFit(ctx, a, x + 70, y + 38, 19, 700, "#111827", w - 92);
+    drawFit(ctx, b, x + 70, y + 64, 14, 500, "#6b7280", w - 92);
   }
 
-  pill(60, 380, 295, "🗓️", cur.ngayLV + " ngày làm việc", cur.cn + " ngày chủ nhật · " + cur.tongNgay + " ngày trong tháng");
-  pill(392, 380, 300, "💵", fmt(cur.luongNgay), "lương / ngày");
-  pill(728, 380, 292, "✅", cur.nc + " ngày công", "thực tế");
+  pill(60, 380, 470, "🗓️", cur.ngayLV + " ngày làm việc", cur.cn + " CN · " + cur.tongNgay + " ngày trong tháng");
+  pill(550, 380, 470, "💵", fmt(cur.luongNgay), "lương / ngày");
+  pill(60, 486, 470, "✅", cur.nc + " ngày công", "thực tế");
+  pill(550, 486, 470, "💼", fmt(cur.lcb), "lương cơ bản / tháng");
 
   ctx.fillStyle = "#ffffff";
-  roundRect(ctx, 60, 490, 960, c.height - 590, 34);
+  roundRect(ctx, 60, 600, 960, c.height - 700, 34);
   ctx.fill();
 
   ctx.strokeStyle = "#e6eaf2";
   ctx.lineWidth = 1;
   ctx.stroke();
 
-  drawText(ctx, "Chi tiết thu nhập", 100, 560, 28, 800, "#111827");
-  drawText(ctx, "Các khoản có giá trị mới được hiển thị", 100, 592, 17, 500, "#8b95a7");
+  drawText(ctx, "Chi tiết thu nhập", 100, 670, 28, 800, "#111827");
+  drawText(ctx, "Các khoản có giá trị mới được hiển thị", 100, 702, 17, 500, "#8b95a7");
 
-  var y = 660;
+  var y = 770;
 
   rows.forEach(function (r) {
-    ctx.fillStyle = r.minus ? "#fce9e7" : "#e8f1ec";
+    var isInfo = r.type === "info";
+    var isMinus = r.type === "minus";
+
+    ctx.fillStyle = isInfo ? "#e9eefb" : isMinus ? "#fce9e7" : "#e8f1ec";
     roundRect(ctx, 100, y - 36, 48, 48, 16);
     ctx.fill();
 
-    drawText(ctx, r.minus ? "−" : "+", 124, y - 3, 28, 900, r.minus ? "#e56458" : "#46a171", "center");
-    drawText(ctx, r.label, 170, y - 4, 23, 600, "#374151");
-    drawText(ctx, (r.minus ? "− " : "+ ") + fmt(r.val), 980, y - 4, 24, 800, r.minus ? "#e56458" : "#16a34a", "right");
+    drawText(
+      ctx,
+      isInfo ? "₫" : isMinus ? "−" : "+",
+      124,
+      y - 3,
+      26,
+      900,
+      isInfo ? "#4b6bfb" : isMinus ? "#e56458" : "#46a171",
+      "center"
+    );
+
+    drawFit(ctx, r.label, 170, y - 4, 23, 600, isInfo ? "#111827" : "#374151", 520);
+
+    drawText(
+      ctx,
+      (isInfo ? "" : isMinus ? "− " : "+ ") + fmt(r.val),
+      980,
+      y - 4,
+      24,
+      800,
+      isInfo ? "#111827" : isMinus ? "#e56458" : "#16a34a",
+      "right"
+    );
 
     ctx.strokeStyle = "#eef1f6";
     ctx.beginPath();
@@ -1608,6 +1679,30 @@ function xuatAnh() {
       return;
     }
 
+    function taiVe() {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+
+      a.download = fileName;
+      a.href = url;
+
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      setTimeout(function () {
+        URL.revokeObjectURL(url);
+      }, 3000);
+
+      haptic("success");
+      toast("✅ Đã tải ảnh: " + fileName);
+    }
+
+    if (laDesktop()) {
+      taiVe();
+      return;
+    }
+
     var file = new File([blob], fileName, {
       type: "image/png"
     });
@@ -1624,29 +1719,13 @@ function xuatAnh() {
           toast("✅ Đã mở chia sẻ ảnh");
         })
         .catch(function () {
-          haptic("error");
-          toast("Bạn đã huỷ chia sẻ");
+          taiVe();
         });
 
       return;
     }
 
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-
-    a.download = fileName;
-    a.href = url;
-
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-
-    setTimeout(function () {
-      URL.revokeObjectURL(url);
-    }, 3000);
-
-    haptic("success");
-    toast("✅ Đã tải ảnh: " + fileName);
+    taiVe();
   }, "image/png");
 }
 
