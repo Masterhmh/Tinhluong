@@ -25,7 +25,13 @@ async function handleUpdate(update, env) {
   if (!msg) return;
 
   const chatId = msg.chat.id;
-  const text = (msg.text || "").trim();
+const text = (msg.text || "").trim();
+
+console.log("Incoming text:", text, "chatId:", chatId);
+
+if (text === "/ping") {
+  return sendMessage(env, chatId, "pong");
+}
 
   if (msg.web_app_data && msg.web_app_data.data) {
     return handleMiniAppData(chatId, msg.web_app_data.data, env);
