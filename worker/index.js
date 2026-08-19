@@ -489,16 +489,15 @@ async function sendMessage(env, chatId, text, replyMarkup, parseMode) {
   if (replyMarkup) payload.reply_markup = replyMarkup;
   if (parseMode) payload.parse_mode = parseMode;
 
-  const res = await fetch(
-    `https://api.telegram.org/bot${env.BOT_TOKEN}/sendMessage`,
-    {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    }
-  );
+  const url = "https://api.telegram.org/bot" + env.BOT_TOKEN + "/sendMessage";
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
 
   if (!res.ok) {
     console.log(await res.text());
