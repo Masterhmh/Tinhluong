@@ -17,3 +17,4 @@ Telegram bot + Mini App tính lương.
 \- `wrangler.toml`: Cloudflare Worker config
 
 Updated deployment trigger.
+Trigger Pages redeploy.
