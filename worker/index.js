@@ -8,7 +8,14 @@ export default {
       return new Response("Method not allowed", { status: 405 });
     }
 
-    const update = await request.json();
+    let update;
+
+    try {
+      update = await request.json();
+    } catch (err) {
+      console.log("ERROR: Cannot parse request JSON:", err);
+      return new Response("Bad Request", { status: 400 });
+    }
 
     try {
       await handleUpdate(update, env);
@@ -21,17 +28,32 @@ export default {
 };
 
 async function handleUpdate(update, env) {
-  const msg = update.message;
-  if (!msg) return;
+  console.log("FULL UPDATE:", JSON.stringify(update));
 
-  const chatId = msg.chat.id;
-const text = (msg.text || "").trim();
+  const msg =
+    update.message ||
+    update.edited_message ||
+    update.channel_post ||
+    update.edited_channel_post;
 
-console.log("Incoming text:", text, "chatId:", chatId);
+  if (!msg) {
+    console.log("No message object found");
+    return;
+  }
 
-if (text === "/ping") {
-  return sendMessage(env, chatId, "pong");
-}
+  const chatId = msg.chat && msg.chat.id;
+  const text = (msg.text || "").trim();
+
+  console.log("Incoming text:", text, "chatId:", chatId);
+
+  if (!chatId) {
+    console.log("No chatId found");
+    return;
+  }
+
+  if (text === "/ping") {
+    return sendMessage(env, chatId, "pong");
+  }
 
   if (msg.web_app_data && msg.web_app_data.data) {
     return handleMiniAppData(chatId, msg.web_app_data.data, env);
@@ -51,6 +73,7 @@ if (text === "/ping") {
         "2. Dùng lệnh /luongthang để nhận mẫu nhập liệu.",
         "",
         "Lệnh hỗ trợ:",
+        "/ping",
         "/luongthang",
         "/luongthang 7",
         "/luongthang07",
@@ -74,6 +97,8 @@ if (text === "/ping") {
     const result = calculateSalary(input);
     return sendMessage(env, chatId, formatSalaryResult(result));
   }
+
+  console.log("No command matched:", text);
 }
 
 function miniAppKeyboard(env) {
@@ -125,6 +150,7 @@ async function sendHelp(env, chatId) {
       "Bấm nút bên dưới.",
       "",
       "Hoặc dùng lệnh:",
+      "/ping",
       "/luongthang",
       "/luongthang 7",
       "/luongthang07",
@@ -494,6 +520,17 @@ async function sendMessage(env, chatId, text, replyMarkup, parseMode) {
   if (replyMarkup) payload.reply_markup = replyMarkup;
   if (parseMode) payload.parse_mode = parseMode;
 
+  if (!env.BOT_TOKEN) {
+    console.log("ERROR: BOT_TOKEN is missing");
+    return;
+  }
+
+  const tokenPreview =
+    String(env.BOT_TOKEN).slice(0, 8) + "..." + String(env.BOT_TOKEN).slice(-6);
+
+  console.log("Sending message to chatId:", chatId);
+  console.log("BOT_TOKEN preview:", tokenPreview);
+
   const url = "https://api.telegram.org/bot" + env.BOT_TOKEN + "/sendMessage";
 
   const res = await fetch(url, {
@@ -504,7 +541,8 @@ async function sendMessage(env, chatId, text, replyMarkup, parseMode) {
     body: JSON.stringify(payload),
   });
 
-  if (!res.ok) {
-    console.log(await res.text());
-  }
+  const responseText = await res.text();
+
+  console.log("Telegram sendMessage status:", res.status);
+  console.log("Telegram sendMessage response:", responseText);
 }
