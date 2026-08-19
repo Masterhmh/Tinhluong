@@ -1392,6 +1392,7 @@ function tinh() {
   var thang = getThang();
   $("#ncRange").max = ngayLamViec(thang).lv;
   render(tinhLuong(docForm(), thang));
+  luuNhapCho();
 }
 
 document.addEventListener("input", function (e) {
@@ -1800,7 +1801,7 @@ function xuatAnh() {
 $("#btnGuiBot").addEventListener("click", guiBot);
 $("#btnAnh").addEventListener("click", xuatAnh);
 
-/* Chế độ nhập liệu: ẩn Thực nhận / Xuất ảnh / Gửi về bot, hiện nút Xong */
+/* ===== Chế độ nhập liệu: hiện nút Xong, ẩn Thực nhận / Xuất ảnh / Gửi về bot ===== */
 var timerTyping = null;
 
 function laONhapChu(el) {
@@ -1845,11 +1846,11 @@ function ketThucNhap() {
   document.body.classList.remove("typing");
   haptic();
   tinh();
+  luuNhap();
 }
 
 $("#btnXong").addEventListener("click", ketThucNhap);
 
-/* Bấm ra vùng trống cũng ẩn bàn phím */
 function anBanPhim(e) {
   if (!laONhapChu(document.activeElement)) return;
 
@@ -1863,10 +1864,135 @@ function anBanPhim(e) {
 document.addEventListener("pointerdown", anBanPhim);
 document.addEventListener("touchstart", anBanPhim, { passive: true });
 
-/* Enter cũng ẩn bàn phím */
 document.addEventListener("keydown", function (e) {
   if (e.key === "Enter" && e.target.tagName === "INPUT") {
     ketThucNhap();
+  }
+});
+
+/* ===== Tự lưu dữ liệu tạm ===== */
+var LUU_KEY = "tinhluong_cache_v1";
+var CACHE_PHUT = 2; // đổi số này để tăng/giảm thời gian giữ dữ liệu
+var timerLuu = null;
+
+function luuNhap() {
+  try {
+    var o = {
+      t: Date.now(),
+      thang: $("#mThang").value,
+      nam: $("#mNam").value,
+      f: {},
+      extra: []
+    };
+
+    $$("[data-k]").forEach(function (el) {
+      o.f[el.getAttribute("data-k")] = el.value;
+    });
+
+    $$(".extra-item").forEach(function (box) {
+      var ten = box.querySelector(".extra-name").value;
+      var tien = parseMoney(box.querySelector(".extra-money").value) || 0;
+
+      if (ten || tien) {
+        o.extra.push({ name: ten, value: tien });
+      }
+    });
+
+    localStorage.setItem(LUU_KEY, JSON.stringify(o));
+  } catch (e) {}
+}
+
+function luuNhapCho() {
+  clearTimeout(timerLuu);
+  timerLuu = setTimeout(luuNhap, 400);
+}
+
+function xoaCache() {
+  try {
+    localStorage.removeItem(LUU_KEY);
+  } catch (e) {}
+}
+
+function sangChip() {
+  $$("input[data-chips]").forEach(function (inp) {
+    var box = inp.parentNode.querySelector(".chips");
+    if (!box) return;
+
+    var raw = String(inp.value || "").trim();
+    var v = inp.hasAttribute("data-money")
+      ? parseMoney(raw)
+      : parseFloat(raw.replace(",", "."));
+
+    Array.prototype.forEach.call(box.querySelectorAll(".chip"), function (b) {
+      var t = b.textContent;
+      var bv = inp.hasAttribute("data-money")
+        ? parseMoney(t)
+        : parseFloat(t.replace(",", "."));
+
+      b.classList.toggle("on", raw !== "" && v != null && !isNaN(v) && bv === v);
+    });
+  });
+}
+
+function napNhap() {
+  var raw = null;
+
+  try {
+    raw = localStorage.getItem(LUU_KEY);
+  } catch (e) {
+    return false;
+  }
+
+  if (!raw) return false;
+
+  var o = null;
+
+  try {
+    o = JSON.parse(raw);
+  } catch (e) {
+    xoaCache();
+    return false;
+  }
+
+  if (!o || !o.t || Date.now() - o.t > CACHE_PHUT * 60 * 1000) {
+    xoaCache();
+    return false;
+  }
+
+  if (o.nam) {
+    themNam(parseInt(o.nam, 10));
+    $("#mNam").value = String(o.nam);
+  }
+
+  if (o.thang) {
+    $("#mThang").value = String(o.thang);
+  }
+
+  $$("[data-k]").forEach(function (el) {
+    var k = el.getAttribute("data-k");
+
+    if (o.f && o.f[k] != null) {
+      el.value = o.f[k];
+    }
+  });
+
+  $("#ncRange").value = parseFloat($("#ncNum").value) || 0;
+
+  (o.extra || []).forEach(function (x) {
+    themKhoanCong(x.name, x.value);
+  });
+
+  sangChip();
+
+  return true;
+}
+
+window.addEventListener("pagehide", luuNhap);
+window.addEventListener("beforeunload", luuNhap);
+
+document.addEventListener("visibilitychange", function () {
+  if (document.visibilityState === "hidden") {
+    luuNhap();
   }
 });
 
@@ -1875,8 +2001,8 @@ document.addEventListener("keydown", function (e) {
     tg.ready();
     tg.expand();
 
-    if (tg.enableClosingConfirmation) {
-      tg.enableClosingConfirmation();
+    if (tg.disableClosingConfirmation) {
+      tg.disableClosingConfirmation();
     }
 
     if (tg.MainButton) {
@@ -1903,7 +2029,13 @@ document.addEventListener("keydown", function (e) {
   $("#mThang").value = String(d.getMonth() + 1);
   $("#mNam").value = String(yNay);
 
+  var daNap = napNhap();
+
   tinh();
+
+  if (daNap) {
+    toast("↩️ Đã phục hồi dữ liệu vừa nhập");
+  }
 })();
 </script>
 </body>
