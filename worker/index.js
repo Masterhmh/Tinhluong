@@ -142,8 +142,7 @@ async function sendSalaryTemplate(env, chatId, month) {
     "",
     "Copy mẫu dưới đây, điền số rồi gửi lại:",
     "",
-    "```",
-    `luongthang: ${month}`,
+    "luongthang: " + month,
     "luong_co_ban:",
     "ngay_cong:",
     "he_so_trach_nhiem:",
@@ -162,7 +161,6 @@ async function sendSalaryTemplate(env, chatId, month) {
     "cong_them: Tên khoản | Số tiền",
     "cong_them: Hoa hồng | 500k",
     "cong_them: Bonus dự án | 1tr",
-    "```",
     "",
     "Ghi chú:",
     "- Có thể nhập: 9tr, 1tr2, 500k, 1200000, 1.200.000",
@@ -170,7 +168,8 @@ async function sendSalaryTemplate(env, chatId, month) {
     "- Dòng cong_them có dạng: Tên khoản | Số tiền",
   ].join("\n");
 
-  return sendMessage(env, chatId, text, miniAppKeyboard(env), "Markdown");
+  // Không dùng Markdown để tránh lỗi dấu "_" trong Telegram.
+  return sendMessage(env, chatId, text, miniAppKeyboard(env));
 }
 
 function looksLikeSalaryForm(text) {
