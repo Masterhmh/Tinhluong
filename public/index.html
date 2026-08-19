@@ -101,6 +101,7 @@ select {
 
 .hero-title {
   font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 .month-picker {
@@ -673,7 +674,7 @@ input[type="range"] {
 
   <div class="hero">
     <div class="hero-top">
-      <div class="hero-title">💰 Bảng lương</div>
+      <div class="hero-title">💰 BẢNG LƯƠNG</div>
       <div class="month-picker">
         <button type="button" id="mPrev">‹</button>
         <select id="mThang"></select>
@@ -1529,18 +1530,12 @@ function xuatAnh() {
 
   var rows = [];
 
-  rows.push({
-    label: "Lương cơ bản / tháng",
-    val: cur.lcb,
-    type: "info"
-  });
-
   function add(label, val, minus) {
     if (val) {
       rows.push({
         label: label,
         val: val,
-        type: minus ? "minus" : "plus"
+        minus: !!minus
       });
     }
   }
@@ -1591,7 +1586,7 @@ function xuatAnh() {
   ctx.arc(935, 40, 135, 0, Math.PI * 2);
   ctx.fill();
 
-  drawText(ctx, "💰 Bảng lương", 100, 128, 30, 800, "#ffffff");
+  drawText(ctx, "💰 BẢNG LƯƠNG", 100, 128, 30, 800, "#ffffff");
   drawText(ctx, "THÁNG " + cur.thang.slice(5) + "/" + cur.thang.slice(0, 4), 100, 178, 20, 700, "rgba(255,255,255,.78)");
   drawText(ctx, fmt(cur.thucNhan), 100, 270, 62, 900, "#ffffff");
 
@@ -1610,9 +1605,9 @@ function xuatAnh() {
   }
 
   pill(60, 380, 470, "🗓️", cur.ngayLV + " ngày làm việc", cur.cn + " CN · " + cur.tongNgay + " ngày trong tháng");
-  pill(550, 380, 470, "💵", fmt(cur.luongNgay), "lương / ngày");
-  pill(60, 486, 470, "✅", cur.nc + " ngày công", "thực tế");
-  pill(550, 486, 470, "💼", fmt(cur.lcb), "lương cơ bản / tháng");
+  pill(550, 380, 470, "💵", fmt(cur.luongNgay), "Lương / Ngày");
+  pill(60, 486, 470, "✅", cur.nc + " ngày công", "Thực tế");
+  pill(550, 486, 470, "💼", fmt(cur.lcb), "Lương cơ bản / Tháng");
 
   ctx.fillStyle = "#ffffff";
   roundRect(ctx, 60, 600, 960, c.height - 700, 34);
@@ -1628,34 +1623,20 @@ function xuatAnh() {
   var y = 770;
 
   rows.forEach(function (r) {
-    var isInfo = r.type === "info";
-    var isMinus = r.type === "minus";
-
-    ctx.fillStyle = isInfo ? "#e9eefb" : isMinus ? "#fce9e7" : "#e8f1ec";
+    ctx.fillStyle = r.minus ? "#fce9e7" : "#e8f1ec";
     roundRect(ctx, 100, y - 36, 48, 48, 16);
     ctx.fill();
 
+    drawText(ctx, r.minus ? "−" : "+", 124, y - 3, 26, 900, r.minus ? "#e56458" : "#46a171", "center");
+    drawFit(ctx, r.label, 170, y - 4, 23, 600, "#374151", 520);
     drawText(
       ctx,
-      isInfo ? "₫" : isMinus ? "−" : "+",
-      124,
-      y - 3,
-      26,
-      900,
-      isInfo ? "#4b6bfb" : isMinus ? "#e56458" : "#46a171",
-      "center"
-    );
-
-    drawFit(ctx, r.label, 170, y - 4, 23, 600, isInfo ? "#111827" : "#374151", 520);
-
-    drawText(
-      ctx,
-      (isInfo ? "" : isMinus ? "− " : "+ ") + fmt(r.val),
+      (r.minus ? "− " : "+ ") + fmt(r.val),
       980,
       y - 4,
       24,
       800,
-      isInfo ? "#111827" : isMinus ? "#e56458" : "#16a34a",
+      r.minus ? "#e56458" : "#16a34a",
       "right"
     );
 
