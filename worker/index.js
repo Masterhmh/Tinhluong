@@ -123,7 +123,7 @@ async function handleUpdate(update, env) {
   if (looksLikeSalaryForm(text)) {
     const input = parseSalaryForm(text);
     const result = calculateSalary(input);
-    return sendMessage(env, chatId, formatSalaryResult(result));
+    return sendMessage(env, chatId, formatSalaryResult(result), null, "HTML");
   }
 
   console.log("No command matched:", text);
@@ -306,7 +306,7 @@ async function handleMiniAppData(chatId, rawData, env) {
   const input = normalizeMiniAppInput(data);
   const result = calculateSalary(input);
 
-  return sendMessage(env, chatId, formatSalaryResult(result));
+  return sendMessage(env, chatId, formatSalaryResult(result), null, "HTML");
 }
 
 async function handleMiniAppPost(request, env) {
@@ -341,7 +341,7 @@ async function handleMiniAppPost(request, env) {
   const input = normalizeMiniAppInput(data);
   const result = calculateSalary(input);
 
-  await sendMessage(env, chatId, formatSalaryResult(result));
+  await sendMessage(env, chatId, formatSalaryResult(result), null, "HTML");
 
   return jsonResponse({
     ok: true,
@@ -470,89 +470,89 @@ function getWorkingInfo(year, month) {
   };
 }
 
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 function formatSalaryResult(r) {
   const sep = "━━━━━━━━━━━━━━━━━━━";
-  const lines = [];
+  const L = [];
 
-  lines.push(sep);
-  lines.push(`💰 BẢNG LƯƠNG THÁNG ${pad2(r.month)}/${r.year}`);
-  lines.push(sep);
-  lines.push("");
+  L.push(sep);
+  L.push(`<b>💰 BẢNG LƯƠNG THÁNG ${pad2(r.month)}/${r.year}</b>`);
+  L.push(sep);
 
-  lines.push("🗓 KỲ LƯƠNG");
-  lines.push(
+  L.push("<b>🗓 KỲ LƯƠNG</b>");
+  L.push(
     `01/${pad2(r.month)}/${r.year} — ${r.totalDays}/${pad2(r.month)}/${r.year}`
   );
-  lines.push("");
 
-  lines.push("📅 NGÀY CÔNG");
-  lines.push(`• Số ngày trong tháng: ${r.totalDays} ngày`);
-  lines.push(`• Ngày chủ nhật: ${r.sundayCount} ngày`);
-  lines.push(`• Ngày làm việc: ${r.workingDays} ngày`);
-  lines.push(`• Ngày công thực tế: ${r.actualDays} ngày`);
-  lines.push("");
+  L.push("<b>📅 NGÀY CÔNG</b>");
+  L.push(`• Số ngày trong tháng: <b>${r.totalDays} ngày</b>`);
+  L.push(`• Ngày chủ nhật: <b>${r.sundayCount} ngày</b>`);
+  L.push(`• Ngày làm việc: <b>${r.workingDays} ngày</b>`);
+  L.push(`• Ngày công thực tế: <b>${r.actualDays} ngày</b>`);
 
-  lines.push("💵 CĂN CỨ TÍNH LƯƠNG");
-  lines.push(`• Lương cơ bản / tháng: ${fmt(r.baseSalary)}`);
-  lines.push(`• Lương / ngày: ${fmt(r.salaryPerDay)}`);
+  L.push("<b>💵 CĂN CỨ TÍNH LƯƠNG</b>");
+  L.push(`• Lương cơ bản / tháng: <b>${fmt(r.baseSalary)}</b>`);
+  L.push(`• Lương / ngày: <b>${fmt(r.salaryPerDay)}</b>`);
   if (r.responsibilityCoef) {
-    lines.push(
-      `• Hệ số trách nhiệm: ${r.responsibilityCoef} × ${fmt(
+    L.push(
+      `• Hệ số trách nhiệm: <b>${r.responsibilityCoef}</b> × ${fmt(
         r.responsibilityBase
       )}`
     );
   }
   if (r.mealPerDay) {
-    lines.push(`• Tiền ăn 1 buổi: ${fmt(r.mealPerDay)}`);
+    L.push(`• Tiền ăn 1 buổi: <b>${fmt(r.mealPerDay)}</b>`);
   }
-  lines.push("");
 
-  lines.push("➕ CÁC KHOẢN CỘNG");
-  lines.push(
-    `• Lương ngày công (${r.actualDays} ngày): ${fmt(r.salaryByDay)}`
+  L.push("<b>➕ CÁC KHOẢN CỘNG</b>");
+  L.push(
+    `• Lương ngày công (${r.actualDays} ngày): <b>${fmt(r.salaryByDay)}</b>`
   );
   if (r.responsibility) {
-    lines.push(`• Phụ cấp trách nhiệm: ${fmt(r.responsibility)}`);
+    L.push(`• Phụ cấp trách nhiệm: <b>${fmt(r.responsibility)}</b>`);
   }
   if (r.meal) {
-    lines.push(`• Tiền ăn (${r.actualDays} buổi): ${fmt(r.meal)}`);
+    L.push(`• Tiền ăn (${r.actualDays} buổi): <b>${fmt(r.meal)}</b>`);
   }
-  if (r.allowance) lines.push(`• Trợ cấp: ${fmt(r.allowance)}`);
-  if (r.businessFee) lines.push(`• Công tác phí: ${fmt(r.businessFee)}`);
-  if (r.bonus) lines.push(`• Thưởng nóng: ${fmt(r.bonus)}`);
-  if (r.overtime) lines.push(`• Tăng ca: ${fmt(r.overtime)}`);
-  if (r.upsell) lines.push(`• Upsell: ${fmt(r.upsell)}`);
+  if (r.allowance) L.push(`• Trợ cấp: <b>${fmt(r.allowance)}</b>`);
+  if (r.businessFee) L.push(`• Công tác phí: <b>${fmt(r.businessFee)}</b>`);
+  if (r.bonus) L.push(`• Thưởng nóng: <b>${fmt(r.bonus)}</b>`);
+  if (r.overtime) L.push(`• Tăng ca: <b>${fmt(r.overtime)}</b>`);
+  if (r.upsell) L.push(`• Upsell: <b>${fmt(r.upsell)}</b>`);
 
   if (r.extraCong && r.extraCong.length) {
     r.extraCong.forEach((item) => {
       if (Number(item.value || 0) > 0) {
-        lines.push(`• ${item.name}: ${fmt(item.value)}`);
+        L.push(`• ${escapeHtml(item.name)}: <b>${fmt(item.value)}</b>`);
       }
     });
   }
 
-  lines.push(`▸ Tổng thu nhập: ${fmt(r.plus)}`);
-  lines.push("");
+  L.push(`▸ <b>Tổng thu nhập: ${fmt(r.plus)}</b>`);
 
-  lines.push("➖ CÁC KHOẢN TRỪ");
+  L.push("<b>➖ CÁC KHOẢN TRỪ</b>");
   if (r.minus > 0) {
-    if (r.latePenalty) lines.push(`• Đi muộn: ${fmt(r.latePenalty)}`);
-    if (r.penalty) lines.push(`• Phạt: ${fmt(r.penalty)}`);
-    if (r.advance) lines.push(`• Ứng lương: ${fmt(r.advance)}`);
+    if (r.latePenalty) L.push(`• Đi muộn: <b>${fmt(r.latePenalty)}</b>`);
+    if (r.penalty) L.push(`• Phạt: <b>${fmt(r.penalty)}</b>`);
+    if (r.advance) L.push(`• Ứng lương: <b>${fmt(r.advance)}</b>`);
   } else {
-    lines.push("• Không có khoản trừ");
+    L.push("• Không có khoản trừ");
   }
-  lines.push(`▸ Tổng khoản trừ: ${fmt(r.minus)}`);
-  lines.push("");
+  L.push(`▸ <b>Tổng khoản trừ: ${fmt(r.minus)}</b>`);
 
-  lines.push(sep);
-  lines.push(`✅ THỰC NHẬN: ${fmt(r.total)}`);
-  lines.push(sep);
-  lines.push("");
-  lines.push(`🕒 Lập lúc ${nowVN()}`);
-  lines.push("🤖 Bot tính lương");
+  L.push(sep);
+  L.push(`✅ <b>THỰC NHẬN: ${fmt(r.total)}</b>`);
+  L.push(sep);
+  L.push(`<i>🕒 Lập lúc ${nowVN()}</i>`);
+  L.push("<i>🤖 Bot tính lương</i>");
 
-  return lines.join("\n");
+  return L.join("\n");
 }
 
 function parseMoney(raw) {
@@ -623,7 +623,7 @@ function getCurrentYearVN() {
 }
 
 function nowVN() {
-  return new Intl.DateTimeFormat("vi-VN", {
+  const p = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Bangkok",
     day: "2-digit",
     month: "2-digit",
@@ -631,7 +631,11 @@ function nowVN() {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  }).format(new Date());
+  }).formatToParts(new Date());
+
+  const get = (t) => (p.find((x) => x.type === t) || {}).value || "";
+
+  return `${get("hour")}:${get("minute")} ${get("day")}/${get("month")}/${get("year")}`;
 }
 
 function pad2(n) {
@@ -693,18 +697,19 @@ async function setMenuButton(env) {
 }
 
 async function sendMessage(env, chatId, text, replyMarkup, parseMode) {
-  const payload = {
-    chat_id: chatId,
-    text,
-  };
-
-  if (replyMarkup) payload.reply_markup = replyMarkup;
-  if (parseMode) payload.parse_mode = parseMode;
-
   if (!env.BOT_TOKEN) {
     console.log("ERROR: BOT_TOKEN is missing");
     return;
   }
+
+  const payload = {
+    chat_id: chatId,
+    text,
+    disable_web_page_preview: true,
+  };
+
+  if (replyMarkup) payload.reply_markup = replyMarkup;
+  if (parseMode) payload.parse_mode = parseMode;
 
   const url = "https://api.telegram.org/bot" + env.BOT_TOKEN + "/sendMessage";
 
