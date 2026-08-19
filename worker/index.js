@@ -72,13 +72,14 @@ async function handleUpdate(update, env) {
       env,
       chatId,
       [
-        "✅ Đã bật nút Mini App.",
+        "<b>✅ Đã bật nút Mini App</b>",
+        "Nút <b>Tính lương</b> sẽ hiện ở cạnh khung nhập tin nhắn.",
+        "Chưa thấy? Hãy đóng Telegram rồi mở lại.",
         "",
-        "Nếu chưa thấy nút menu, hãy đóng Telegram rồi mở lại.",
-        "",
-        "Bạn cũng có thể bấm nút bên dưới để mở Mini App ngay.",
+        "Hoặc bấm nút bên dưới để mở ngay.",
       ].join("\n"),
-      miniAppKeyboard(env)
+      miniAppKeyboard(env),
+      "HTML"
     );
   }
 
@@ -91,28 +92,22 @@ async function handleUpdate(update, env) {
       env,
       chatId,
       [
-        "👋 Chào bạn!",
+        "<b>👋 Chào bạn!</b>",
+        "Mình là bot tính lương hàng tháng.",
         "",
-        "Mình là bot tính lương.",
+        "<b>Chọn 1 trong 2 cách:</b>",
+        "🧮 Bấm nút bên dưới để nhập trên <b>Mini App</b> — nhanh và trực quan nhất",
+        "⌨️ Hoặc gõ /luongthang để nhận mẫu nhập bằng tin nhắn",
         "",
-        "Bạn có thể:",
-        "1. Bấm nút Mini App để nhập bằng giao diện.",
-        "2. Dùng lệnh /luongthang để nhận mẫu nhập liệu.",
-        "",
-        "Lệnh hỗ trợ:",
-        "/ping",
-        "/miniapp",
-        "/luongthang",
-        "/luongthang 7",
-        "/luongthang07",
-        "/help",
+        "Gõ /huongdan nếu muốn xem hướng dẫn đầy đủ.",
       ].join("\n"),
-      miniAppKeyboard(env)
+      miniAppKeyboard(env),
+      "HTML"
     );
   }
 
-  if (text === "/help" || text.startsWith("/help@")) {
-    return sendHelp(env, chatId);
+  if (isHuongDanCommand(text)) {
+    return sendHuongDan(env, chatId);
   }
 
   if (isLuongThangCommand(text)) {
@@ -144,6 +139,11 @@ function miniAppKeyboard(env) {
   };
 }
 
+function isHuongDanCommand(text) {
+  const clean = text.replace(/@\w+/g, "");
+  return /^\/huongdan$/i.test(clean);
+}
+
 function isLuongThangCommand(text) {
   const clean = text.replace(/@\w+/g, "");
   return /^\/luongthang(\s+\d{1,2}|\d{1,2})?$/i.test(clean);
@@ -167,45 +167,60 @@ function clampMonth(month, fallback) {
   return month;
 }
 
-async function sendHelp(env, chatId) {
-  return sendMessage(
-    env,
-    chatId,
-    [
-      "📘 Hướng dẫn dùng bot tính lương",
-      "",
-      "Mở giao diện Mini App:",
-      "Bấm nút bên dưới hoặc dùng lệnh /miniapp.",
-      "",
-      "Lệnh hỗ trợ:",
-      "/ping",
-      "/miniapp",
-      "/luongthang",
-      "/luongthang 7",
-      "/luongthang07",
-      "",
-      "Bot sẽ gửi mẫu để bạn điền số liệu.",
-      "",
-      "Có thể nhập tiền dạng:",
-      "9tr, 1tr2, 500k, 1200000, 1.200.000",
-      "",
-      "Dòng nào bỏ trống sẽ tính là 0.",
-      "",
-      "Phụ cấp trách nhiệm = hệ số × lương ngày công",
-      "(lương cơ bản ÷ ngày làm việc × ngày công thực tế).",
-    ].join("\n"),
-    miniAppKeyboard(env)
-  );
+async function sendHuongDan(env, chatId) {
+  const sep = "━━━━━━━━━━━━━━━━━━━";
+
+  const text = [
+    sep,
+    "<b>📘 HƯỚNG DẪN SỬ DỤNG</b>",
+    sep,
+    "<b>1. Cách nhanh nhất — Mini App</b>",
+    "Bấm nút <b>Mở Mini App tính lương</b> ở dưới, nhập số liệu rồi bấm <b>Gửi về bot</b>.",
+    "Bạn cũng có thể xuất bảng lương thành ảnh PNG.",
+    "Nếu chưa thấy nút menu ở khung chat, gõ /miniapp.",
+    "",
+    "<b>2. Cách nhập bằng tin nhắn</b>",
+    "• Gõ /luongthang → bot gửi mẫu của tháng hiện tại",
+    "• Gõ /luongthang 7 → mẫu tháng 7",
+    "Copy mẫu, điền số vào sau dấu hai chấm rồi gửi lại. Bot sẽ tính và trả về bảng lương.",
+    "",
+    "<b>3. Cách viết số tiền</b>",
+    "Viết kiểu nào cũng được:",
+    "<code>9tr</code> = 9.000.000 • <code>1tr2</code> = 1.200.000",
+    "<code>500k</code> = 500.000 • <code>1200000</code> • <code>1.200.000</code>",
+    "Dòng nào bỏ trống hoặc không điền sẽ được tính là <b>0</b>.",
+    "",
+    "<b>4. Thêm khoản cộng tự đặt tên</b>",
+    "Dùng dòng <code>cong_them: Tên khoản | Số tiền</code>",
+    "Ví dụ: <code>cong_them: Hoa hồng | 500k</code>",
+    "Có thể thêm nhiều dòng <code>cong_them</code>.",
+    "",
+    "<b>5. Cách bot tính lương</b>",
+    "• Ngày làm việc = số ngày trong tháng − số ngày Chủ nhật",
+    "• Lương / ngày = lương cơ bản ÷ ngày làm việc",
+    "• Lương ngày công = lương / ngày × ngày công thực tế",
+    "• Phụ cấp trách nhiệm = hệ số × lương ngày công",
+    "• Tiền ăn = tiền ăn 1 buổi × ngày công thực tế",
+    "• Thực nhận = tổng khoản cộng − tổng khoản trừ",
+    "",
+    sep,
+    "<b>📋 DANH SÁCH LỆNH</b>",
+    "/luongthang — mẫu nhập của tháng hiện tại",
+    "/luongthang 7 — mẫu nhập tháng 7",
+    "/miniapp — bật lại nút Mini App",
+    "/huongdan — xem hướng dẫn này",
+    "/ping — kiểm tra bot còn hoạt động",
+    sep,
+  ].join("\n");
+
+  return sendMessage(env, chatId, text, miniAppKeyboard(env), "HTML");
 }
 
 async function sendSalaryTemplate(env, chatId, month) {
   const year = getCurrentYearVN();
+  const info = getWorkingInfo(year, month);
 
-  const text = [
-    `📌 Mẫu tính lương tháng ${pad2(month)}/${year}`,
-    "",
-    "Copy mẫu dưới đây, điền số rồi gửi lại:",
-    "",
+  const form = [
     "luongthang: " + month,
     "luong_co_ban:",
     "ngay_cong:",
@@ -219,20 +234,29 @@ async function sendSalaryTemplate(env, chatId, month) {
     "di_muon:",
     "phat:",
     "ung_luong:",
-    "",
-    "# Khoản cộng bổ sung, có thể thêm nhiều dòng:",
-    "cong_them: Tên khoản | Số tiền",
-    "cong_them: Hoa hồng | 500k",
-    "cong_them: Bonus dự án | 1tr",
-    "",
-    "Ghi chú:",
-    "- Có thể nhập: 9tr, 1tr2, 500k, 1200000, 1.200.000",
-    "- Dòng nào bỏ trống sẽ tính là 0",
-    "- Dòng cong_them có dạng: Tên khoản | Số tiền",
-    "- Phụ cấp trách nhiệm = hệ số × lương ngày công",
   ].join("\n");
 
-  return sendMessage(env, chatId, text, miniAppKeyboard(env));
+  const text = [
+    `<b>📌 MẪU TÍNH LƯƠNG THÁNG ${pad2(month)}/${year}</b>`,
+    `Tháng này có <b>${info.totalDays} ngày</b>, trong đó <b>${info.sundayCount} ngày Chủ nhật</b> → <b>${info.workingDays} ngày làm việc</b>.`,
+    "",
+    "<b>Bước 1.</b> Bấm vào khối dưới để copy:",
+    `<pre>${form}</pre>`,
+    "<b>Bước 2.</b> Điền số vào sau dấu hai chấm rồi gửi lại cho mình.",
+    "",
+    "<b>Muốn thêm khoản cộng khác?</b> Thêm dòng:",
+    "<code>cong_them: Hoa hồng | 500k</code>",
+    "<code>cong_them: Bonus dự án | 1tr</code>",
+    "",
+    "<b>Lưu ý</b>",
+    "• Tiền viết kiểu nào cũng được: 9tr, 1tr2, 500k, 1.200.000",
+    "• Dòng bỏ trống được tính là 0",
+    "• Phụ cấp trách nhiệm = hệ số × lương ngày công",
+    "",
+    "💡 Nhập trên Mini App sẽ nhanh hơn — bấm nút bên dưới.",
+  ].join("\n");
+
+  return sendMessage(env, chatId, text, miniAppKeyboard(env), "HTML");
 }
 
 function looksLikeSalaryForm(text) {
