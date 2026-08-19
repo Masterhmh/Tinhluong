@@ -195,12 +195,14 @@ function parseSalaryForm(text) {
       const parts = value.split("|");
       const name = (parts[0] || "Khoản cộng khác").trim();
       const amount = parseMoney(parts[1] || "");
+
       if (amount > 0) {
         extraCong.push({
           name,
           value: amount,
         });
       }
+
       return;
     }
 
@@ -444,6 +446,7 @@ function parseMoney(raw) {
 
 function parseNumber(raw) {
   if (raw == null) return 0;
+
   const s = String(raw).trim().replace(",", ".");
   if (!s) return 0;
 
@@ -487,12 +490,17 @@ async function sendMessage(env, chatId, text, replyMarkup, parseMode) {
   if (parseMode) payload.parse_mode = parseMode;
 
   const res = await fetch(
-  `https://api.telegram.org/bot${env.BOT_TOKEN}/sendMessage`,
-  {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(payload),
+    `https://api.telegram.org/bot${env.BOT_TOKEN}/sendMessage`,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  if (!res.ok) {
+    console.log(await res.text());
   }
-);
+}
