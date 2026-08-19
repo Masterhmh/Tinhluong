@@ -1783,7 +1783,36 @@ function xuatAnh() {
 
 $("#btnGuiBot").addEventListener("click", guiBot);
 $("#btnAnh").addEventListener("click", xuatAnh);
+/* Bấm ra vùng trống -> ẩn bàn phím */
+function anBanPhim(e) {
+  var el = document.activeElement;
 
+  if (!el) return;
+
+  var laONhap =
+    el.tagName === "INPUT" ||
+    el.tagName === "SELECT" ||
+    el.tagName === "TEXTAREA";
+
+  if (!laONhap) return;
+
+  // Nếu đang bấm vào chính ô nhập, nút, chip, tab... thì không ẩn
+  if (e.target.closest("input, select, textarea, button, label, summary")) {
+    return;
+  }
+
+  el.blur();
+}
+
+document.addEventListener("pointerdown", anBanPhim);
+document.addEventListener("touchstart", anBanPhim, { passive: true });
+
+/* Bấm Enter hoặc nút Done cũng ẩn bàn phím */
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Enter" && e.target.tagName === "INPUT") {
+    e.target.blur();
+  }
+});
 (function init() {
   if (tg) {
     tg.ready();
