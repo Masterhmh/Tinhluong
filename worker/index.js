@@ -190,6 +190,9 @@ async function sendHelp(env, chatId) {
       "9tr, 1tr2, 500k, 1200000, 1.200.000",
       "",
       "Dòng nào bỏ trống sẽ tính là 0.",
+      "",
+      "Phụ cấp trách nhiệm = hệ số × lương ngày công",
+      "(lương cơ bản ÷ ngày làm việc × ngày công thực tế).",
     ].join("\n"),
     miniAppKeyboard(env)
   );
@@ -207,7 +210,6 @@ async function sendSalaryTemplate(env, chatId, month) {
     "luong_co_ban:",
     "ngay_cong:",
     "he_so_trach_nhiem:",
-    "muc_co_so_trach_nhiem:",
     "tien_an_1_buoi:",
     "tro_cap:",
     "cong_tac_phi:",
@@ -227,6 +229,7 @@ async function sendSalaryTemplate(env, chatId, month) {
     "- Có thể nhập: 9tr, 1tr2, 500k, 1200000, 1.200.000",
     "- Dòng nào bỏ trống sẽ tính là 0",
     "- Dòng cong_them có dạng: Tên khoản | Số tiền",
+    "- Phụ cấp trách nhiệm = hệ số × lương ngày công",
   ].join("\n");
 
   return sendMessage(env, chatId, text, miniAppKeyboard(env));
@@ -276,7 +279,6 @@ function parseSalaryForm(text) {
     actualDays: parseNumber(map.ngay_cong) || 0,
 
     responsibilityCoef: parseNumber(map.he_so_trach_nhiem) || 0,
-    responsibilityBase: parseMoney(map.muc_co_so_trach_nhiem) || 0,
 
     mealPerDay: parseMoney(map.tien_an_1_buoi) || 0,
 
@@ -357,7 +359,6 @@ function normalizeMiniAppInput(data) {
     actualDays: Number(data.actualDays || data.nc || 0),
 
     responsibilityCoef: Number(data.responsibilityCoef || data.hs || 0),
-    responsibilityBase: Number(data.responsibilityBase || data.mcs || 0),
 
     mealPerDay: Number(data.mealPerDay || data.ta || 0),
 
@@ -387,7 +388,9 @@ function calculateSalary(input) {
 
   const salaryByDay = Math.round(salaryPerDay * actualDays);
 
-  const responsibilityBase = input.responsibilityBase || baseSalary;
+  // Mức cơ sở tính trách nhiệm
+  // = lương cơ bản ÷ ngày làm việc (đã trừ chủ nhật) × ngày công thực tế
+  const responsibilityBase = salaryByDay;
   const responsibilityCoef = Number(input.responsibilityCoef || 0);
   const responsibility = Math.round(responsibilityBase * responsibilityCoef);
 
@@ -501,7 +504,7 @@ function formatSalaryResult(r) {
   L.push(`• Lương / ngày: <b>${fmt(r.salaryPerDay)}</b>`);
   if (r.responsibilityCoef) {
     L.push(
-      `• Hệ số trách nhiệm: <b>${r.responsibilityCoef}</b> × ${fmt(
+      `• Hệ số trách nhiệm: <b>${r.responsibilityCoef}</b> × lương ngày công ${fmt(
         r.responsibilityBase
       )}`
     );
