@@ -139,9 +139,10 @@ select {
 .cap {
   margin-top: 18px;
   font-size: 12px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  opacity: 0.85;
+  font-weight: 700;
+  opacity: 0.9;
 }
 
 .big {
@@ -209,11 +210,11 @@ select {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  color: rgba(255, 255, 255, 0.94);
-  font-size: 12px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .hero-detail > summary::-webkit-details-marker {
@@ -291,12 +292,77 @@ select {
 
 .card h3,
 .card summary {
+  position: relative;
   margin: 0;
-  color: var(--hint);
+  padding-left: 12px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.card h3::before,
+.card summary::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 3px;
+  bottom: 3px;
+  width: 4px;
+  border-radius: 99px;
+  background: linear-gradient(180deg, #4f46e5, #22d3ee);
+}
+
+.card h3 .step,
+.card summary .step {
+  display: inline-block;
+  min-width: 20px;
+  height: 20px;
+  margin-right: 7px;
+  border-radius: 7px;
+  background: rgba(59, 130, 246, 0.14);
+  color: var(--accent);
   font-size: 12px;
   font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  text-align: center;
+  line-height: 20px;
+}
+
+.card h3 .sub,
+.card summary .sub {
+  display: block;
+  padding-top: 2px;
+  color: var(--hint);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.card summary > .badge {
+  flex: none;
+  align-self: flex-start;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: var(--soft);
+  color: var(--hint);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sec-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 10px 2px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.sec-title small {
+  color: var(--hint);
+  font-size: 12px;
+  font-weight: 500;
 }
 
 details.card > summary {
@@ -683,7 +749,7 @@ input[type="range"] {
       </div>
     </div>
 
-    <div class="cap">Thực nhận dự kiến</div>
+    <div class="cap">Tổng thực nhận dự kiến</div>
     <div class="big" id="tong">0 ₫</div>
 
     <div class="meter">
@@ -697,7 +763,7 @@ input[type="range"] {
     </div>
 
     <details class="hero-detail">
-      <summary><span>🧾 Xem chi tiết bảng lương</span><span>▾</span></summary>
+      <summary><span>🧾 Chi tiết bảng lương</span><span>Xem ▾</span></summary>
       <div id="rows"></div>
       <div id="canhBao"></div>
     </details>
@@ -706,7 +772,10 @@ input[type="range"] {
   <div class="grid">
     <div class="col">
       <details class="card" open>
-        <summary><span>⚙️ Thông tin cố định</span><span id="sumFix">—</span></summary>
+        <summary>
+          <span><span class="step">1</span>Lương &amp; phụ cấp cố định<span class="sub">Các con số ít thay đổi hàng tháng</span></span>
+          <span class="badge" id="sumFix">—</span>
+        </summary>
 
         <div class="field">
           <label>Lương cơ bản / tháng <span class="unit">VD: 9tr</span></label>
@@ -730,7 +799,7 @@ input[type="range"] {
       </details>
 
       <div class="card">
-        <h3>📆 Ngày công thực tế</h3>
+        <h3><span class="step">2</span>Ngày công thực tế<span class="sub">Số ngày bạn đã đi làm trong tháng</span></h3>
         <div class="stepper">
           <button type="button" id="ncDown">−</button>
           <input type="text" inputmode="decimal" data-k="nc" id="ncNum" value="24">
@@ -741,9 +810,11 @@ input[type="range"] {
     </div>
 
     <div class="col">
+      <div class="sec-title"><span class="step">3</span>Thu nhập thêm &amp; khoản trừ <small>Chọn nhóm để nhập</small></div>
+
       <div class="tabs">
-        <button type="button" class="on" data-tab="cong">➕ Khoản cộng<span class="n" id="nCong"></span></button>
-        <button type="button" data-tab="tru">➖ Khoản trừ<span class="n" id="nTru"></span></button>
+        <button type="button" class="on" data-tab="cong">➕ Các khoản cộng<span class="n" id="nCong"></span></button>
+        <button type="button" data-tab="tru">➖ Các khoản trừ<span class="n" id="nTru"></span></button>
       </div>
 
       <div class="panel on" id="p-cong">
@@ -774,7 +845,7 @@ input[type="range"] {
           </div>
 
           <div class="extra-head">
-            <span>Khoản cộng bổ sung</span>
+            <span>Khoản cộng khác <small style="font-weight:500;opacity:.75">tự đặt tên</small></span>
             <button type="button" class="mini-btn" id="btnThemCong">+ Thêm khoản</button>
           </div>
 
@@ -807,7 +878,7 @@ input[type="range"] {
 
 <div class="bar">
   <div class="v">
-    <small>Thực nhận</small>
+    <small>Thực nhận tháng này</small>
     <strong id="barTong">0 ₫</strong>
   </div>
   <div class="bar-actions">
