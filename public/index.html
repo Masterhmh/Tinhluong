@@ -46,16 +46,15 @@ button,.chip,.mode-btn,.st2-btn,.extra-del,.mini-btn,summary,.tg-btn{touch-actio
 
 .hero{position:relative;overflow:hidden;border-radius:24px;padding:18px;color:#fff;background:linear-gradient(135deg,#4f46e5 0%,#2563eb 52%,#0ea5e9 100%);box-shadow:0 16px 34px rgba(37,99,235,.28)}
 .hero::after{content:"";position:absolute;z-index:0;width:190px;height:190px;right:-84px;top:-96px;border-radius:50%;background:rgba(255,255,255,.12)}
-.hero-top{position:relative;display:flex;align-items:flex-start;gap:10px;z-index:1}
-.hero-title{font-size:17px;font-weight:900;letter-spacing:.02em;line-height:1.2}
-.hero-sub{margin-top:2px;font-size:12px;font-weight:600;opacity:.78}
+.hero-top{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.hero-title{flex:none;font-size:23px;font-weight:900;letter-spacing:.03em;line-height:1.1;white-space:nowrap}
 
-.month-picker{margin-left:auto;display:flex;align-items:center;gap:6px}
-.month-picker select{height:32px;border:1px solid rgba(255,255,255,.22);border-radius:11px;padding:0 26px 0 10px;background-color:rgba(255,255,255,.12);background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;color:#fff;font-size:16px;font-weight:700;cursor:pointer;appearance:none;-webkit-appearance:none}
+.month-picker{flex:none;display:flex;align-items:center;gap:5px}
+.month-picker select{height:27px;border:1px solid rgba(255,255,255,.22);border-radius:9px;padding:0 21px 0 8px;background-color:rgba(255,255,255,.12);background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;background-size:9px 6px;color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;appearance:none;-webkit-appearance:none}
 .month-picker select:active{background-color:rgba(255,255,255,.24)}
 .month-picker select option{color:#111827;background:#fff}
 
-.cap{position:relative;z-index:1;margin-top:16px;font-size:13px;font-weight:500;opacity:.85}
+.cap{position:relative;z-index:1;margin-top:18px;font-size:13px;font-weight:500;opacity:.85}
 .big{position:relative;z-index:1;margin-top:2px;font-size:36px;font-weight:900;letter-spacing:-.8px;font-variant-numeric:tabular-nums}
 .meter{display:flex;height:8px;margin-top:14px;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.22)}
 .meter i{display:block;height:100%;transition:width .3s ease}
@@ -80,7 +79,7 @@ button,.chip,.mode-btn,.st2-btn,.extra-del,.mini-btn,summary,.tg-btn{touch-actio
 }
 
 .wk{margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
-.wk-lb{margin-bottom:9px;color:var(--hint);font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+.wk-lb{margin-bottom:9px;color:var(--hint);font-size:12.5px;font-weight:800;letter-spacing:.01em;text-transform:none}
 .mode{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:3px;border-radius:12px;background:var(--soft)}
 @media (min-width:560px){.mode{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .mode-btn{border:0;border-radius:9px;padding:9px 4px;background:transparent;color:var(--hint);font-size:12px;font-weight:700;line-height:1.25;cursor:pointer;transition:background .16s,color .16s,box-shadow .16s}
@@ -164,14 +163,15 @@ details[open] > summary .tg-btn i{transform:rotate(180deg)}
 details.month-card > summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none}
 details.month-card > summary::-webkit-details-marker{display:none}
 .month-lb{flex:1;min-width:0}
-.month-sum{display:block;padding-top:1px;color:var(--hint);font-size:11.5px;font-weight:500;font-style:normal;font-variant-numeric:tabular-nums}
+.month-sum,.month-desc{display:block;padding-top:1px;color:var(--hint);font-size:11.5px;font-weight:500;font-style:normal;line-height:1.35;font-variant-numeric:tabular-nums}
+details.month-card[open] > summary .month-sum{display:none}
+details.month-card:not([open]) > summary .month-desc{display:none}
 details.month-card:not([open]) > summary{padding-bottom:0;border-bottom:0}
 
 .field{margin-top:14px}
 .field label{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:7px;color:var(--hint);font-size:13px}
 .field label .unit{font-size:11px;opacity:.75}
 input[type="text"],input[type="number"]{width:100%;border:1.5px solid transparent;outline:none;border-radius:15px;padding:13px 14px;color:var(--text);background:var(--soft);font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;transition:border-color .15s,background .15s}
-select{font-size:16px}
 input:focus{border-color:var(--accent);background:rgba(59,130,246,.1)}
 input.bad{border-color:var(--bad);background:rgba(239,68,68,.1)}
 .note{margin-top:8px;border-radius:12px;padding:9px 11px;background:rgba(59,130,246,.09);color:var(--hint);font-size:12px;line-height:1.5}
@@ -251,10 +251,7 @@ body.typing .bar-done{display:block}
 
   <div class="hero">
     <div class="hero-top">
-      <div>
-        <div class="hero-title">BẢNG LƯƠNG</div>
-        <div class="hero-sub" id="heroSub">—</div>
-      </div>
+      <div class="hero-title">BẢNG LƯƠNG</div>
       <div class="month-picker">
         <select id="mThang"></select>
         <select id="mNam"></select>
@@ -285,7 +282,7 @@ body.typing .bar-done{display:block}
   <details class="month-card" id="cardMonth" open>
     <summary class="month-head">
       <span class="month-ico">📅</span>
-      <span class="month-lb">Thông tin tháng<em class="month-sum" id="sumMonth">—</em></span>
+      <span class="month-lb">Thông tin tháng<em class="month-desc">Số ngày, lịch nghỉ hàng tuần và cách tính lương của tháng</em><em class="month-sum" id="sumMonth">—</em></span>
       <span class="tg-btn" role="button" aria-label="Ẩn hiện"><em></em><i>▾</i></span>
     </summary>
 
@@ -351,7 +348,7 @@ body.typing .bar-done{display:block}
 
       <details class="card" id="cardFix" open>
         <summary>
-          <span><span class="step">2</span>Lương &amp; phụ cấp cố định<span class="sub">Các con số ít thay đổi hàng tháng</span></span>
+          <span><span class="step">2</span>Lương &amp; phụ cấp<span class="sub">Các con số ít thay đổi hàng tháng</span></span>
           <span class="s-right">
             <span class="badge" id="sumFix">—</span>
             <span class="tg-btn" role="button" aria-label="Ẩn hiện"><em></em><i>▾</i></span>
@@ -972,11 +969,6 @@ function capNhatNoteNC(r) {
 
 function render(r) {
   animate(r.thucNhan);
-
-  var thang = parseInt(r.thang.slice(5), 10);
-  var nam = r.thang.slice(0, 4);
-
-  $("#heroSub").textContent = "Tháng " + thang + " · " + nam;
 
   $("#stTong").textContent = r.tongNgay;
   $("#stT7").textContent = r.t7;
