@@ -372,19 +372,27 @@ async function sendHuongDan(env, chatId) {
     "Ví dụ: <code>Cộng thêm: Hoa hồng | 500k</code>",
     "Có thể thêm nhiều dòng <b>Cộng thêm</b> khác nhau.",
     "",
-    "<b>5. Lịch nghỉ hàng tuần</b>",
-    "Mặc định bot chỉ trừ Chủ nhật.",
-    "Nếu công ty nghỉ cả Thứ 7, thêm dòng <code>Nghỉ thứ 7: có</code>.",
-    "Lịch nghỉ đặc biệt (T7 cách tuần, nghỉ lễ dài) thì ấn định thẳng:",
-    "<code>Ngày làm việc: 23</code>",
+    "<b>5. Lịch nghỉ — để bot tự tính ngày công</b>",
+    "Bỏ trống <b>Ngày công</b>, bot sẽ tự tính theo dòng <code>Lịch nghỉ</code>:",
+    "• <code>CN</code> — chỉ nghỉ Chủ nhật",
+    "• <code>T7+CN</code> — nghỉ cả Thứ 7 và Chủ nhật",
+    "• <code>T7 cách tuần</code> — nghỉ Chủ nhật, Thứ 7 nghỉ cách tuần",
+    "• <code>không</code> — làm cả tuần",
+    "Nghỉ phép, việc riêng thì thêm <code>Nghỉ thêm: 2</code>.",
+    "Muốn chắc ăn thì cứ điền thẳng số vào <b>Ngày công</b>, bot ưu tiên con số bạn ghi.",
     "",
     "<b>6. Cách bot tính lương</b>",
-    "• Ngày làm việc = số ngày trong tháng − ngày nghỉ tuần",
-    "• Lương / ngày = lương cơ bản ÷ ngày làm việc",
+    "• Ngày tính lương = số ngày trong tháng − số Chủ nhật (luôn cố định)",
+    "• Lương / ngày = lương cơ bản ÷ ngày tính lương",
     "• Lương ngày công = lương / ngày × ngày công thực tế",
     "• Phụ cấp trách nhiệm = hệ số × lương ngày công",
     "• Tiền ăn = tiền ăn 1 buổi × ngày công thực tế",
     "• Thực nhận = tổng khoản cộng − tổng khoản trừ",
+    "",
+    "<b>Ví dụ tháng 11/2025</b>",
+    "30 ngày − 5 Chủ nhật = <b>25 ngày tính lương</b>",
+    "Lương cơ bản 9tr → lương / ngày = <b>360.000 ₫</b>",
+    "Nghỉ T7 + CN, đi đủ 20 ngày → 360.000 × 20 = <b>7.200.000 ₫</b>",
     "",
     sep,
     "<b>📋 DANH SÁCH LỆNH</b>",
@@ -406,8 +414,9 @@ async function sendSalaryTemplate(env, chatId, month) {
   const form = [
     "Tháng: " + month,
     "Lương cơ bản:",
+    "Lịch nghỉ: CN",
+    "Nghỉ thêm: 0",
     "Ngày công:",
-    "Nghỉ thứ 7: không",
     "Hệ số trách nhiệm:",
     "Tiền ăn 1 buổi:",
     "Trợ cấp:",
@@ -424,14 +433,16 @@ async function sendSalaryTemplate(env, chatId, month) {
   const text = [
     `<b>📌 TÍNH LƯƠNG THÁNG ${pad2(month)}/${year}</b>`,
     `Tháng này có <b>${info.totalDays} ngày</b> · <b>${info.sundayCount} Chủ nhật</b> · <b>${info.saturdayCount} Thứ 7</b>`,
+    `→ Ngày tính lương: <b>${info.payDays} ngày</b>`,
     "",
     "Bấm vào khối dưới để copy → điền số vào sau dấu hai chấm → gửi lại cho mình.",
     "<b>Dòng nào không điền thì mặc định là 0.</b>",
     `<pre>${form}</pre>`,
     "<b>💡 Giải thích</b>",
     "• <b>Lương cơ bản</b> — lương 1 tháng ghi trên hợp đồng",
-    "• <b>Ngày công</b> — số ngày bạn thực tế đi làm trong tháng",
-    "• <b>Nghỉ thứ 7</b> — ghi <code>có</code> nếu nghỉ cả T7, ghi <code>không</code> nếu vẫn làm",
+    "• <b>Lịch nghỉ</b> — ghi <code>CN</code> / <code>T7+CN</code> / <code>T7 cách tuần</code> / <code>không</code>",
+    "• <b>Nghỉ thêm</b> — số ngày nghỉ phép, việc riêng trong tháng",
+    "• <b>Ngày công</b> — bỏ trống thì bot tự tính từ lịch nghỉ; điền số thì bot dùng số của bạn",
     "• <b>Hệ số trách nhiệm</b> — ví dụ 0.03, không có thì để trống",
     "• <b>Tiền ăn 1 buổi</b> — bot tự nhân với số ngày công",
     "• <b>Cộng thêm</b> — khoản tự đặt tên, viết <code>Tên khoản | Số tiền</code>",
@@ -440,7 +451,7 @@ async function sendSalaryTemplate(env, chatId, month) {
     "<b>Số tiền viết kiểu nào cũng hiểu</b>",
     "<code>9tr</code> · <code>1tr2</code> · <code>500k</code> · <code>1200000</code> · <code>1.200.000</code>",
     "",
-    "Lịch nghỉ đặc biệt? Thêm dòng <code>Ngày làm việc: 23</code> để tự ấn định.",
+    `<b>Cách tính</b> — lương cơ bản ÷ <b>${info.payDays}</b> ngày tính lương × ngày công thực tế.`,
     "",
     "🧮 Không muốn gõ? Bấm nút dưới để nhập trên Mini App.",
   ].join("\n");
@@ -465,12 +476,14 @@ const KEY_MAP = {
   so_ngay_cong: "ngay_cong",
   ngay_di_lam: "ngay_cong",
 
-  nghi_thu_7: "nghi_thu_7",
-  nghi_t7: "nghi_thu_7",
-  co_nghi_thu_7: "nghi_thu_7",
+  lich_nghi: "lich_nghi",
+  nghi_hang_tuan: "lich_nghi",
+  ngay_nghi_tuan: "lich_nghi",
+  che_do_nghi: "lich_nghi",
 
-  ngay_lam_viec: "ngay_lam_viec",
-  so_ngay_lam_viec: "ngay_lam_viec",
+  nghi_them: "nghi_them",
+  ngay_nghi_them: "nghi_them",
+  nghi_phep: "nghi_them",
 
   he_so_trach_nhiem: "he_so_trach_nhiem",
   he_so: "he_so_trach_nhiem",
@@ -515,10 +528,29 @@ function canonicalKey(raw) {
   return KEY_MAP[k] || k;
 }
 
-function parseYesNo(raw) {
+function parseLich(raw) {
   const s = normalizeKey(raw || "");
-  if (!s) return false;
-  return ["co", "yes", "y", "true", "1", "x", "ok", "dung"].includes(s);
+  if (!s) return "cn";
+
+  if (s.includes("khong") || s.includes("full") || s.includes("ca_tuan")) {
+    return "khong";
+  }
+
+  if (s.includes("t7") || s.includes("thu_7") || s.includes("bay")) {
+    if (s.includes("cach") || s.includes("luan") || s.includes("xen")) {
+      return "cn_t7x";
+    }
+    return "cn_t7";
+  }
+
+  return "cn";
+}
+
+function tenLich(lich) {
+  if (lich === "khong") return "làm cả tuần";
+  if (lich === "cn_t7") return "nghỉ Thứ 7 + Chủ nhật";
+  if (lich === "cn_t7x") return "nghỉ CN + Thứ 7 cách tuần";
+  return "nghỉ Chủ nhật";
 }
 
 function looksLikeSalaryForm(text) {
@@ -568,8 +600,8 @@ function parseSalaryForm(text) {
     baseSalary: parseMoney(map.luong_co_ban) || 0,
     actualDays: parseNumber(map.ngay_cong) || 0,
 
-    saturdayOff: parseYesNo(map.nghi_thu_7),
-    workingDaysOverride: parseNumber(map.ngay_lam_viec) || 0,
+    lich: parseLich(map.lich_nghi),
+    extraOff: parseNumber(map.nghi_them) || 0,
 
     responsibilityCoef: parseNumber(map.he_so_trach_nhiem) || 0,
 
@@ -667,12 +699,17 @@ async function handleMiniAppPost(request, env) {
 }
 
 function normalizeMiniAppInput(data) {
+  const cheDo = String(data.cheDo || "cn");
+
+  const lich =
+    cheDo === "cn_t7" ? "cn_t7" : cheDo === "cn_t7x" ? "cn_t7x" : "cn";
+
   return {
     month: Number(data.month || getCurrentMonthVN()),
     year: Number(data.year || getCurrentYearVN()),
 
-    saturdayOff: data.cheDo === "cn_t7",
-    workingDaysOverride: Number(data.ngayLV || 0),
+    lich,
+    extraOff: Number(data.nghiThem || 0),
 
     baseSalary: Number(data.baseSalary || data.lcb || 0),
     actualDays: Number(data.actualDays || data.nc || 0),
@@ -699,24 +736,24 @@ function normalizeMiniAppInput(data) {
 
 function calculateSalary(input) {
   const year = Number(input.year) || getCurrentYearVN();
+  const month = Number(input.month) || getCurrentMonthVN();
 
-  const workingInfo = getWorkingInfo(
-    year,
-    input.month,
-    input.saturdayOff,
-    input.workingDaysOverride
-  );
+  const info = getWorkingInfo(year, month);
+
+  const lich = input.lich || "cn";
+  const extraOff = Number(input.extraOff || 0);
 
   const baseSalary = input.baseSalary || 0;
-  const actualDays = input.actualDays || 0;
 
-  const salaryPerDay =
-    workingInfo.workingDays > 0 ? baseSalary / workingInfo.workingDays : 0;
+  // Ngày công: ưu tiên số người dùng nhập, nếu bỏ trống thì suy ra từ lịch nghỉ
+  const autoDays = Math.max(0, daysFromSchedule(info, lich) - extraOff);
+  const actualDays = Number(input.actualDays || 0) || autoDays;
 
+  // Mẫu số LUÔN cố định = số ngày trong tháng − số Chủ nhật
+  const salaryPerDay = info.payDays > 0 ? baseSalary / info.payDays : 0;
   const salaryByDay = Math.round(salaryPerDay * actualDays);
 
-  // Mức cơ sở tính trách nhiệm
-  // = lương cơ bản ÷ ngày làm việc × ngày công thực tế
+  // Hệ số trách nhiệm × lương theo ngày công thực tế
   const responsibilityBase = salaryByDay;
   const responsibilityCoef = Number(input.responsibilityCoef || 0);
   const responsibility = Math.round(responsibilityBase * responsibilityCoef);
@@ -746,17 +783,18 @@ function calculateSalary(input) {
     Number(input.advance || 0);
 
   return {
-    month: input.month,
+    month,
     year,
 
-    totalDays: workingInfo.totalDays,
-    sundayCount: workingInfo.sundayCount,
-    saturdayCount: workingInfo.saturdayCount,
-    saturdayOff: workingInfo.saturdayOff,
-    workingDays: workingInfo.workingDays,
-    offDays: workingInfo.offDays,
-    customDays: workingInfo.customDays,
+    totalDays: info.totalDays,
+    sundayCount: info.sundayCount,
+    saturdayCount: info.saturdayCount,
+    payDays: info.payDays,
+    workingDays: info.payDays,
 
+    lich,
+    extraOff,
+    autoDays,
     actualDays,
 
     baseSalary,
@@ -788,7 +826,7 @@ function calculateSalary(input) {
   };
 }
 
-function getWorkingInfo(year, month, saturdayOff, override) {
+function getWorkingInfo(year, month) {
   const totalDays = new Date(year, month, 0).getDate();
 
   let sundayCount = 0;
@@ -801,23 +839,25 @@ function getWorkingInfo(year, month, saturdayOff, override) {
     else if (w === 6) saturdayCount++;
   }
 
-  const auto = saturdayOff
-    ? totalDays - sundayCount - saturdayCount
-    : totalDays - sundayCount;
-
-  const ov = Number(override || 0);
-  const useOverride = ov > 0 && ov <= totalDays && ov !== auto;
-  const workingDays = useOverride ? ov : auto;
-
   return {
     totalDays,
     sundayCount,
     saturdayCount,
-    saturdayOff: Boolean(saturdayOff),
-    workingDays,
-    offDays: totalDays - workingDays,
-    customDays: useOverride,
+    payDays: totalDays - sundayCount,
   };
+}
+
+function daysFromSchedule(info, lich) {
+  if (lich === "khong") return info.totalDays;
+  if (lich === "cn_t7") {
+    return info.totalDays - info.sundayCount - info.saturdayCount;
+  }
+  if (lich === "cn_t7x") {
+    return (
+      info.totalDays - info.sundayCount - Math.ceil(info.saturdayCount / 2)
+    );
+  }
+  return info.payDays;
 }
 
 function escapeHtml(s) {
@@ -842,23 +882,23 @@ function formatSalaryResult(r) {
 
   L.push("<b>📅 NGÀY CÔNG</b>");
   L.push(`• Số ngày trong tháng: <b>${r.totalDays} ngày</b>`);
+  L.push(`• Ngày Chủ nhật: <b>${r.sundayCount} ngày</b>`);
+  L.push(`• Ngày tính lương: <b>${r.payDays} ngày</b>`);
+  L.push(`• Lịch nghỉ: <b>${tenLich(r.lich)}</b>`);
 
-  if (r.customDays) {
-    L.push(`• Ngày nghỉ: <b>${r.offDays} ngày</b> (tự ấn định)`);
-  } else if (r.saturdayOff) {
-    L.push(
-      `• Ngày nghỉ tuần: <b>${r.sundayCount} CN + ${r.saturdayCount} T7</b>`
-    );
-  } else {
-    L.push(`• Ngày chủ nhật: <b>${r.sundayCount} ngày</b>`);
+  if (r.extraOff) {
+    L.push(`• Nghỉ thêm: <b>${r.extraOff} ngày</b>`);
   }
 
-  L.push(`• Ngày làm việc: <b>${r.workingDays} ngày</b>`);
   L.push(`• Ngày công thực tế: <b>${r.actualDays} ngày</b>`);
 
   L.push("<b>💵 CĂN CỨ TÍNH LƯƠNG</b>");
   L.push(`• Lương cơ bản / tháng: <b>${fmt(r.baseSalary)}</b>`);
-  L.push(`• Lương / ngày: <b>${fmt(r.salaryPerDay)}</b>`);
+  L.push(
+    `• Lương / ngày: <b>${fmt(r.salaryPerDay)}</b> (${fmt(
+      r.baseSalary
+    )} ÷ ${r.payDays} ngày)`
+  );
 
   if (r.responsibilityCoef) {
     L.push(
@@ -874,7 +914,9 @@ function formatSalaryResult(r) {
 
   L.push("<b>➕ CÁC KHOẢN CỘNG</b>");
   L.push(
-    `• Lương ngày công (${r.actualDays} ngày): <b>${fmt(r.salaryByDay)}</b>`
+    `• Lương ngày công (${r.actualDays}/${r.payDays} ngày): <b>${fmt(
+      r.salaryByDay
+    )}</b>`
   );
 
   if (r.responsibility) {
@@ -1061,4 +1103,39 @@ async function setMenuButton(env) {
   });
 
   const text = await res.text();
-  console.log("setChatMenuButton status:", res
+  console.log("setChatMenuButton status:", res.status, text);
+}
+
+async function sendMessage(env, chatId, text, replyMarkup, parseMode) {
+  if (!env.BOT_TOKEN) {
+    console.log("Cannot send message: missing BOT_TOKEN");
+    return;
+  }
+
+  const apiUrl = "https://api.telegram.org/bot" + env.BOT_TOKEN + "/sendMessage";
+
+  const payload = {
+    chat_id: chatId,
+    text: text,
+    disable_web_page_preview: true,
+  };
+
+  if (parseMode) {
+    payload.parse_mode = parseMode;
+  }
+
+  if (replyMarkup) {
+    payload.reply_markup = replyMarkup;
+  }
+
+  const res = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const body = await res.text();
+  console.log("sendMessage status:", res.status, body);
+}
