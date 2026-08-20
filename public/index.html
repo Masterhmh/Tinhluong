@@ -41,7 +41,7 @@ html,body{margin:0;padding:0}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{background:var(--bg);color:var(--text);font-family:"Be Vietnam Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;touch-action:pan-y;overscroll-behavior:none}
 button,input,select{font-family:inherit}
-button,.chip,.mode-btn,.st2-btn,.extra-del,.mini-btn,summary{touch-action:manipulation}
+button,.chip,.mode-btn,.st2-btn,.extra-del,.mini-btn,summary,.tg-btn{touch-action:manipulation}
 .wrap{max-width:1120px;margin:0 auto;padding:16px 16px 104px}
 
 .hero{position:relative;overflow:hidden;border-radius:24px;padding:18px;color:#fff;background:linear-gradient(135deg,#4f46e5 0%,#2563eb 52%,#0ea5e9 100%);box-shadow:0 16px 34px rgba(37,99,235,.28)}
@@ -127,9 +127,6 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .calc-box{margin-top:12px;border:1px solid rgba(59,130,246,.18);border-radius:14px;background:rgba(59,130,246,.07)}
 .calc-box > summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 13px;cursor:pointer;list-style:none;color:var(--text);font-size:12.5px;font-weight:800}
 .calc-box > summary::-webkit-details-marker{display:none}
-.calc-box > summary .more{flex:none;color:var(--accent);font-size:12px;font-weight:800}
-.calc-box[open] > summary .more::after{content:" ▴"}
-.calc-box:not([open]) > summary .more::after{content:" ▾"}
 .calc-box .wk-note{margin-top:0;padding:0 13px 13px;border:0;border-radius:0;background:transparent}
 
 .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start;margin-top:14px}
@@ -142,27 +139,33 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px;box-shadow:var(--shadow)}
 .card + .card,.card + .tabs,.tabs + .panel{margin-top:12px}
 .detail-card{margin-top:12px}
-.detail-card .more{flex:none;color:var(--accent);font-size:13px;font-weight:800}
-.detail-card[open] .more::after{content:" ▴"}
-.detail-card:not([open]) .more::after{content:" ▾"}
 
 .card h3,.card summary{position:relative;margin:0;padding-left:12px;color:var(--text);font-size:14px;font-weight:800}
 .card h3::before,.card summary::before{content:"";position:absolute;left:0;top:3px;bottom:3px;width:4px;border-radius:99px;background:linear-gradient(180deg,#4f46e5,#22d3ee)}
 .card h3 .step,.card summary .step{display:inline-block;min-width:20px;height:20px;margin-right:7px;border-radius:7px;background:rgba(59,130,246,.14);color:var(--accent);font-size:12px;font-weight:900;text-align:center;line-height:20px}
 .card h3 .sub,.card summary .sub{display:block;padding-top:2px;color:var(--hint);font-size:12px;font-weight:500}
-.card summary > .badge{flex:none;align-self:flex-start;border-radius:999px;padding:4px 10px;background:var(--soft);color:var(--hint);font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}
+.card summary .badge{flex:none;border-radius:999px;padding:4px 10px;background:var(--soft);color:var(--hint);font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}
 .sec-title{display:flex;align-items:baseline;gap:8px;margin:0 0 10px 2px;color:var(--text);font-size:14px;font-weight:800}
 .sec-title small{color:var(--hint);font-size:12px;font-weight:500}
 details.card > summary{display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;list-style:none}
 details.card > summary::-webkit-details-marker{display:none}
 details.card > summary > span:first-child{flex:1;min-width:0}
-details.card[open] > summary .more::after{content:" ▴"}
-details.card:not([open]) > summary .more::after{content:" ▾"}
-.detail-card .more{font-size:0}
-.detail-card .more::before{font-size:13px}
-.detail-card .more::after{font-size:13px}
-.detail-card[open] .more::before{content:"Ẩn"}
-.detail-card:not([open]) .more::before{content:"Xem"}
+
+.tg-btn{flex:none;display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 11px;border:1px solid var(--line);border-radius:999px;background:var(--soft);color:var(--accent);font-size:11.5px;font-weight:800;cursor:pointer;user-select:none;-webkit-user-select:none;transition:.15s}
+.tg-btn:active{transform:scale(.94);background:rgba(46,168,242,.16)}
+.tg-btn i{font-style:normal;font-size:9px;line-height:1;transition:transform .22s ease}
+.tg-btn em{font-style:normal}
+details:not([open]) > summary .tg-btn em::after{content:"Xem"}
+details[open] > summary .tg-btn em::after{content:"Ẩn"}
+details[open] > summary .tg-btn i{transform:rotate(180deg)}
+.s-right{flex:none;display:flex;align-items:center;gap:8px}
+.detail-card .more,.calc-box > summary .more,details.card > summary .more{display:none}
+
+details.month-card > summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none}
+details.month-card > summary::-webkit-details-marker{display:none}
+.month-lb{flex:1;min-width:0}
+.month-sum{display:block;padding-top:1px;color:var(--hint);font-size:11.5px;font-weight:500;font-style:normal;font-variant-numeric:tabular-nums}
+details.month-card:not([open]) > summary{padding-bottom:0;border-bottom:0}
 
 .field{margin-top:14px}
 .field label{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:7px;color:var(--hint);font-size:13px}
@@ -271,17 +274,20 @@ body.typing .bar-done{display:block}
   <details class="card detail-card" id="chiTiet" open>
     <summary>
       <span>🧾 Chi tiết bảng lương<span class="sub">Từng khoản cộng, trừ và số thực nhận</span></span>
-      <span class="more"></span>
+      <span class="s-right">
+        <span class="tg-btn" role="button" aria-label="Ẩn hiện"><em></em><i>▾</i></span>
+      </span>
     </summary>
     <div id="rows"></div>
     <div id="canhBao"></div>
   </details>
 
-  <div class="month-card">
-    <div class="month-head">
+  <details class="month-card" id="cardMonth" open>
+    <summary class="month-head">
       <span class="month-ico">📅</span>
-      <span>Thông tin tháng</span>
-    </div>
+      <span class="month-lb">Thông tin tháng<em class="month-sum" id="sumMonth">—</em></span>
+      <span class="tg-btn" role="button" aria-label="Ẩn hiện"><em></em><i>▾</i></span>
+    </summary>
 
     <div class="month-grid">
       <div class="mi"><b id="stTong">—</b><span>ngày trong tháng</span></div>
@@ -313,19 +319,22 @@ body.typing .bar-done{display:block}
       <details class="calc-box" id="calcBox">
         <summary>
           <span>🧮 Cách tính lương tháng này</span>
-          <span class="more">Xem</span>
+          <span class="tg-btn" role="button" aria-label="Ẩn hiện"><em></em><i>▾</i></span>
         </summary>
         <div class="wk-note" id="wkNote">—</div>
       </details>
     </div>
-  </div>
+  </details>
 
   <div class="grid">
     <div class="col">
       <details class="card" id="cardNC" open>
         <summary>
           <span><span class="step">1</span>Ngày công thực tế<span class="sub">Chọn lịch nghỉ ở trên để tự tính, hoặc sửa tay</span></span>
-          <span class="badge" id="sumNC">—</span>
+          <span class="s-right">
+            <span class="badge" id="sumNC">—</span>
+            <span class="tg-btn" role="button" aria-label="Ẩn hiện"><em></em><i>▾</i></span>
+          </span>
         </summary>
 
         <div class="stepper">
@@ -343,7 +352,10 @@ body.typing .bar-done{display:block}
       <details class="card" id="cardFix" open>
         <summary>
           <span><span class="step">2</span>Lương &amp; phụ cấp cố định<span class="sub">Các con số ít thay đổi hàng tháng</span></span>
-          <span class="badge" id="sumFix">—</span>
+          <span class="s-right">
+            <span class="badge" id="sumFix">—</span>
+            <span class="tg-btn" role="button" aria-label="Ẩn hiện"><em></em><i>▾</i></span>
+          </span>
         </summary>
 
         <div class="field">
@@ -376,7 +388,10 @@ body.typing .bar-done{display:block}
         <details class="card" id="cardCong" open>
           <summary>
             <span>➕ Các khoản cộng<span class="sub">Trợ cấp, thưởng, tăng ca, upsell…</span></span>
-            <span class="badge" id="sumCong">—</span>
+            <span class="s-right">
+              <span class="badge" id="sumCong">—</span>
+              <span class="tg-btn" role="button" aria-label="Ẩn hiện"><em></em><i>▾</i></span>
+            </span>
           </summary>
 
           <div class="field">
@@ -417,7 +432,10 @@ body.typing .bar-done{display:block}
         <details class="card" id="cardTru" open>
           <summary>
             <span>➖ Các khoản trừ<span class="sub">Đi muộn, phạt, ứng lương</span></span>
-            <span class="badge" id="sumTru">—</span>
+            <span class="s-right">
+              <span class="badge" id="sumTru">—</span>
+              <span class="tg-btn" role="button" aria-label="Ẩn hiện"><em></em><i>▾</i></span>
+            </span>
           </summary>
 
           <div class="field">
@@ -964,6 +982,10 @@ function render(r) {
   $("#stT7").textContent = r.t7;
   $("#stCN").textContent = r.cn;
   $("#stLV").textContent = r.ngayTinhLuong;
+
+  $("#sumMonth").textContent =
+    r.tongNgay + " ngày · " + r.cn + " CN · " + r.t7 + " T7 · " +
+    r.ngayTinhLuong + " ngày tính lương";
 
   capNhatWkNote(r);
   capNhatNoteNC(r);
@@ -1523,11 +1545,37 @@ document.addEventListener("keydown", function (e) {
   if (e.key === "Enter" && e.target.tagName === "INPUT") ketThucNhap();
 });
 
-/* ===== Nhớ trạng thái ẩn / hiện của các thẻ ===== */
+/* ===== Lưu trạng thái ẩn / hiện lâu dài ===== */
+var OPEN_KEY = "tinhluong_open_v1";
+
+function luuOpen() {
+  try {
+    var o = {};
+
+    $$("details[id]").forEach(function (d) { o[d.id] = d.open; });
+
+    localStorage.setItem(OPEN_KEY, JSON.stringify(o));
+  } catch (e) {}
+}
+
+function napOpen() {
+  try {
+    var raw = localStorage.getItem(OPEN_KEY);
+    if (!raw) return;
+
+    var o = JSON.parse(raw);
+    if (!o) return;
+
+    $$("details[id]").forEach(function (d) {
+      if (o[d.id] != null) d.open = !!o[d.id];
+    });
+  } catch (e) {}
+}
+
 document.addEventListener("toggle", function (e) {
   if (e.target.tagName === "DETAILS") {
     haptic();
-    luuNhapCho();
+    luuOpen();
   }
 }, true);
 
@@ -1584,12 +1632,6 @@ function luuNhap() {
       var tien = parseMoney(box.querySelector(".extra-money").value) || 0;
 
       if (ten || tien) o.extra.push({ name: ten, value: tien });
-    });
-
-    o.open = {};
-
-    $$("details[id]").forEach(function (d) {
-      o.open[d.id] = d.open;
     });
 
     localStorage.setItem(LUU_KEY, JSON.stringify(o));
@@ -1656,12 +1698,6 @@ function napNhap() {
 
   (o.extra || []).forEach(function (x) { themKhoanCong(x.name, x.value); });
 
-  if (o.open) {
-    $$("details[id]").forEach(function (d) {
-      if (o.open[d.id] != null) d.open = !!o.open[d.id];
-    });
-  }
-
   sangChip();
 
   return true;
@@ -1716,6 +1752,8 @@ function baoDanh() {
 
   $("#mThang").value = String(d.getMonth() + 1);
   $("#mNam").value = String(yNay);
+
+  napOpen();
 
   var daNap = napNhap();
 
