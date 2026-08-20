@@ -83,12 +83,25 @@ button,input,select{font-family:inherit}
 @media (min-width:560px){.mode{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .mode-btn{border:0;border-radius:9px;padding:9px 4px;background:transparent;color:var(--hint);font-size:12px;font-weight:700;line-height:1.25;cursor:pointer;transition:background .16s,color .16s,box-shadow .16s}
 .mode-btn.on{background:var(--card);color:var(--accent);box-shadow:0 1px 5px rgba(15,23,42,.12)}
-.wk-row{display:flex;align-items:center;gap:9px;margin-top:11px;color:var(--hint);font-size:13px}
-.wk-row > span{flex:1;min-width:0}
-.wk-row input{width:76px;flex:none;padding:8px 6px;border-radius:11px;font-size:15px;text-align:center}
-.wk-row em{flex:none;font-style:normal;font-size:12px;opacity:.8}
+
+/* ==== Nghỉ thêm ==== */
+.wk-off{margin-top:14px}
+.wk-off-lb{margin-bottom:8px;color:var(--hint);font-size:12px;font-weight:700;letter-spacing:.01em}
+.wk-off-lb span{font-weight:500;opacity:.75}
+.st2{display:flex;align-items:center;gap:8px;padding:6px;border:1px solid var(--line);border-radius:14px;background:var(--soft)}
+.st2-btn{flex:none;width:38px;height:38px;border:0;border-radius:10px;background:rgba(46,168,242,.14);color:var(--accent);font-size:19px;font-weight:800;line-height:1;cursor:pointer;transition:.15s}
+.st2-btn:active{transform:scale(.92);background:rgba(46,168,242,.26)}
+.st2 input{flex:1;min-width:0;height:38px;padding:0;border:0;background:transparent;outline:none;text-align:center;font-size:17px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+.st2-unit{flex:none;padding-right:6px;color:var(--hint);font-size:12.5px;font-weight:600}
+
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
 .wk-note{margin-top:11px;border-radius:12px;padding:10px 12px;background:rgba(59,130,246,.09);color:var(--hint);font-size:12.2px;line-height:1.62}
 .wk-note b{color:var(--text);font-variant-numeric:tabular-nums}
+.wk-warn{display:block;margin-top:8px;padding-top:8px;border-top:1px dashed rgba(59,130,246,.28);color:#b45309;font-size:11.6px;line-height:1.55}
+.wk-warn b{color:#92400e}
 
 .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start;margin-top:14px}
 @media (max-width:760px){
@@ -118,7 +131,9 @@ details.card > summary::-webkit-details-marker{display:none}
 .field label{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:7px;color:var(--hint);font-size:13px}
 .field label .unit{font-size:11px;opacity:.75}
 input[type="text"],input[type="number"]{width:100%;border:1.5px solid transparent;outline:none;border-radius:15px;padding:13px 14px;color:var(--text);background:var(--soft);font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;transition:border-color .15s,background .15s}
+.st2 input[type="text"]{border-radius:0}
 input:focus{border-color:var(--accent);background:rgba(59,130,246,.1)}
+.st2 input:focus{border-color:transparent;background:transparent}
 input.bad{border-color:var(--bad);background:rgba(239,68,68,.1)}
 .note{margin-top:8px;border-radius:12px;padding:9px 11px;background:rgba(59,130,246,.09);color:var(--hint);font-size:12px;line-height:1.5}
 .note b{color:var(--text);font-variant-numeric:tabular-nums}
@@ -216,9 +231,9 @@ body.typing .bar-done{display:block}
 
     <div class="month-grid">
       <div class="mi"><b id="stTong">—</b><span>ngày trong tháng</span></div>
-      <div class="mi"><b id="stCN">—</b><span id="stCNLb">ngày Chủ nhật</span></div>
+      <div class="mi"><b id="stT7">—</b><span>ngày Thứ 7</span></div>
+      <div class="mi"><b id="stCN">—</b><span>ngày Chủ nhật</span></div>
       <div class="mi"><b id="stLV">—</b><span>ngày tính lương</span></div>
-      <div class="mi"><b id="stNgay">—</b><span>mỗi ngày</span></div>
     </div>
 
     <div class="wk">
@@ -231,10 +246,14 @@ body.typing .bar-done{display:block}
         <button type="button" class="mode-btn" data-mode="tu">Tự nhập</button>
       </div>
 
-      <div class="wk-row" id="wkOff">
-        <span>Nghỉ thêm (phép, việc riêng…)</span>
-        <input id="nghiThem" type="number" inputmode="decimal" min="0" step="0.5" value="0">
-        <em>ngày</em>
+      <div class="wk-off" id="wkOff">
+        <div class="wk-off-lb">Nghỉ thêm <span>(phép, việc riêng…)</span></div>
+        <div class="st2">
+          <button type="button" class="st2-btn" id="ntDown">−</button>
+          <input type="text" inputmode="decimal" id="nghiThem" value="0">
+          <span class="st2-unit">ngày</span>
+          <button type="button" class="st2-btn" id="ntUp">+</button>
+        </div>
       </div>
 
       <div class="wk-note" id="wkNote">—</div>
@@ -494,8 +513,14 @@ function tenCheDo(m) {
   return "tự nhập ngày công";
 }
 
+function soT7Nghi(w, mode) {
+  if (mode === "cn_t7") return w.t7;
+  if (mode === "cn_t7x") return Math.ceil(w.t7 / 2);
+  return 0;
+}
+
 function soNghiThem() {
-  var v = parseFloat($("#nghiThem").value);
+  var v = parseFloat(String($("#nghiThem").value).replace(",", "."));
   return v > 0 ? v : 0;
 }
 
@@ -516,6 +541,19 @@ function datCheDo(mode) {
   });
 
   $("#wkOff").classList.toggle("hide", mode === "tu");
+}
+
+function doiNghiThem(d) {
+  var v = Math.max(0, soNghiThem() + d);
+
+  $("#nghiThem").value = String(Math.round(v * 2) / 2);
+
+  if (cheDo === "tu") datCheDo("cn");
+
+  apCheDo();
+  haptic();
+  tinh();
+  luuNhap();
 }
 
 $$("input[data-chips]").forEach(function (inp) {
@@ -646,6 +684,7 @@ function tinhLuong(inp, thang) {
     tongNgay: w.tongNgay,
     cn: w.cn,
     t7: w.t7,
+    t7Nghi: soT7Nghi(w, cheDo),
     ngayTinhLuong: w.ngayTinhLuong,
 
     lcb: lcb,
@@ -703,6 +742,32 @@ function animate(to) {
   requestAnimationFrame(step);
 }
 
+function capNhatWkNote(r) {
+  var html =
+    "Đang áp dụng: <b>" + tenCheDo(cheDo) + "</b>" +
+    (cheDo !== "tu" && r.nghiThem ? " · nghỉ thêm <b>" + r.nghiThem + "</b> ngày" : "") +
+    "<br>Lương / ngày = " + fmt(r.lcb) + " ÷ <b>" + r.ngayTinhLuong +
+    "</b> ngày tính lương = <b>" + fmt(r.luongNgay) + "</b>" +
+    "<br>Lương ngày công = " + fmt(r.luongNgay) + " × <b>" + r.nc +
+    "</b> ngày = <b>" + fmt(r.luongNgayCong) + "</b>";
+
+  if (cheDo === "cn_t7" || cheDo === "cn_t7x") {
+    html +=
+      '<span class="wk-warn">⚠️ Mẫu số vẫn là <b>' + r.ngayTinhLuong +
+      " ngày</b> (" + r.tongNgay + " ngày − " + r.cn + " Chủ nhật). Nghỉ <b>" +
+      r.t7Nghi + " ngày Thứ 7</b> nên <b>Thứ 7 không được tính lương</b>" +
+      ", lương giảm " + fmt(r.luongNgay * r.t7Nghi) + " so với đi làm cả Thứ 7.</span>";
+  }
+
+  if (cheDo === "tu") {
+    html +=
+      '<span class="wk-warn">Bạn đang tự nhập ngày công. Mẫu số chia lương vẫn giữ <b>' +
+      r.ngayTinhLuong + " ngày</b> (" + r.tongNgay + " ngày − " + r.cn + " Chủ nhật).</span>";
+  }
+
+  $("#wkNote").innerHTML = html;
+}
+
 function render(r) {
   animate(r.thucNhan);
 
@@ -712,18 +777,11 @@ function render(r) {
   $("#heroSub").textContent = "Tháng " + thang + " · " + nam;
 
   $("#stTong").textContent = r.tongNgay;
+  $("#stT7").textContent = r.t7;
   $("#stCN").textContent = r.cn;
-  $("#stCNLb").textContent = "ngày Chủ nhật";
   $("#stLV").textContent = r.ngayTinhLuong;
-  $("#stNgay").textContent = fmt(r.luongNgay);
 
-  $("#wkNote").innerHTML =
-    "Đang áp dụng: <b>" + tenCheDo(cheDo) + "</b>" +
-    (cheDo !== "tu" && r.nghiThem ? " · nghỉ thêm <b>" + r.nghiThem + "</b> ngày" : "") +
-    "<br>Lương / ngày = " + fmt(r.lcb) + " ÷ <b>" + r.ngayTinhLuong +
-    "</b> ngày tính lương = <b>" + fmt(r.luongNgay) + "</b>" +
-    "<br>Lương ngày công = " + fmt(r.luongNgay) + " × <b>" + r.nc +
-    "</b> ngày = <b>" + fmt(r.luongNgayCong) + "</b>";
+  capNhatWkNote(r);
 
   $("#noteMcs").innerHTML =
     "Phụ cấp trách nhiệm = hệ số × lương theo ngày công <b>" + fmt(r.mcs) + "</b>" +
@@ -759,6 +817,15 @@ function render(r) {
   if (r.lcb) {
     html += '<div class="row info"><span>Lương cơ bản / tháng</span><b>' + fmt(r.lcb) + "</b></div>";
   }
+
+  html +=
+    '<div class="row info"><span>Lương / ngày (' + r.lcb / 1 + "".slice(0, 0) +
+    "".slice(0, 0) + "</span><b></b></div>";
+
+  html = html.replace(
+    '<div class="row info"><span>Lương / ngày (' + r.lcb / 1 + "</span><b></b></div>",
+    '<div class="row info"><span>Lương / ngày (÷ ' + r.ngayTinhLuong + " ngày)</span><b>" + fmt(r.luongNgay) + "</b></div>"
+  );
 
   row("Lương ngày công (" + r.nc + " / " + r.ngayTinhLuong + " ngày)", r.luongNgayCong);
   row("Trách nhiệm (HS " + r.hs + " × lương ngày công)", r.tienTN);
@@ -845,6 +912,9 @@ $("#mode").addEventListener("click", function (e) {
   tinh();
   luuNhap();
 });
+
+$("#ntUp").addEventListener("click", function () { doiNghiThem(0.5); });
+$("#ntDown").addEventListener("click", function () { doiNghiThem(-0.5); });
 
 document.addEventListener("input", function (e) {
   var el = e.target;
@@ -1049,7 +1119,7 @@ function roundRect(ctx, x, y, w, h, r) {
 
 function moTaNghi() {
   if (!cur) return "";
-  return cur.tongNgay + " ngày · " + cur.cn + " CN · " + tenCheDo(cheDo);
+  return cur.tongNgay + " ngày · " + cur.t7 + " T7 · " + cur.cn + " CN · " + tenCheDo(cheDo);
 }
 
 function xuatAnh() {
@@ -1273,7 +1343,7 @@ document.addEventListener("keydown", function (e) {
 });
 
 /* ===== Tự lưu dữ liệu tạm ===== */
-var LUU_KEY = "tinhluong_cache_v4";
+var LUU_KEY = "tinhluong_cache_v5";
 var CACHE_PHUT = 2;
 var timerLuu = null;
 
