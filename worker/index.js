@@ -12,6 +12,10 @@ export default {
       });
     }
 
+    if (request.method === "POST" && url.pathname === "/miniapp-open") {
+      return handleMiniAppOpen(request, env);
+    }
+
     if (request.method === "POST" && url.pathname === "/miniapp-data") {
       return handleMiniAppPost(request, env);
     }
@@ -54,6 +58,8 @@ async function handleUpdate(update, env) {
   const chatId = msg.chat && msg.chat.id;
   const text = (msg.text || "").trim();
 
+  await trackUser(env, msg);
+
   console.log("Incoming text:", text, "chatId:", chatId);
 
   if (!chatId) {
@@ -63,6 +69,22 @@ async function handleUpdate(update, env) {
 
   if (text === "/ping" || text.startsWith("/ping@")) {
     return sendMessage(env, chatId, "pong");
+  }
+
+  if (text === "/whoami" || text.startsWith("/whoami@")) {
+    return sendMessage(
+      env,
+      chatId,
+      "🆔 Telegram ID của bạn: <code>" +
+        (msg.from ? msg.from.id : "?") +
+        "</code>",
+      null,
+      "HTML"
+    );
+  }
+
+  if (text === "/thongke" || text.startsWith("/thongke@")) {
+    return sendThongKe(env, chatId, msg.from && msg.from.id);
   }
 
   if (text === "/miniapp" || text.startsWith("/miniapp@")) {
@@ -139,6 +161,158 @@ function miniAppKeyboard(env) {
   };
 }
 
+/* ===================== THỐNG KÊ NGƯỜI DÙNG ===================== */
+
+async function trackFrom(env, from, kind) {
+  if (!env.STATS || !from || !from.id || from.is_bot) return;
+
+  const key = "user:" + from.id;
+  const now = Date.now();
+
+  let rec = null;
+
+  try {
+    rec = await env.STATS.get(key, "json");
+  } catch (err) {
+    console.log("KV get error:", err);
+  }
+
+  if (!rec) {
+    rec = { id: from.id, first: now, count: 0, botCount: 0, appCount: 0 };
+  }
+
+  if (from.first_name || from.last_name) {
+    rec.name = [from.first_name, from.last_name].filter(Boolean).join(" ");
+  }
+
+  if (from.username) rec.username = from.username;
+
+  rec.last = now;
+  rec.count = (rec.count || 0) + 1;
+
+  if (kind === "miniapp") {
+    rec.appCount = (rec.appCount || 0) + 1;
+    rec.lastApp = now;
+  } else {
+    rec.botCount = (rec.botCount || 0) + 1;
+    rec.lastBot = now;
+  }
+
+  try {
+    await env.STATS.put(key, JSON.stringify(rec));
+  } catch (err) {
+    console.log("KV put error:", err);
+  }
+}
+
+async function trackUser(env, msg) {
+  const from = msg && msg.from;
+  const kind = msg && msg.web_app_data ? "miniapp" : "bot";
+  return trackFrom(env, from, kind);
+}
+
+async function listUsers(env) {
+  const keys = [];
+  let cursor;
+
+  do {
+    const res = await env.STATS.list({ prefix: "user:", cursor });
+    res.keys.forEach((k) => keys.push(k.name));
+    cursor = res.list_complete ? null : res.cursor;
+  } while (cursor);
+
+  const users = [];
+
+  for (const key of keys) {
+    try {
+      const rec = await env.STATS.get(key, "json");
+      if (rec) users.push(rec);
+    } catch (err) {
+      console.log("KV read error:", key);
+    }
+  }
+
+  return users;
+}
+
+async function sendThongKe(env, chatId, fromId) {
+  if (!env.STATS) {
+    return sendMessage(
+      env,
+      chatId,
+      "⚠️ Chưa bật KV. Hãy tạo namespace và thêm binding STATS trong wrangler.toml."
+    );
+  }
+
+  if (env.ADMIN_ID && String(fromId) !== String(env.ADMIN_ID)) {
+    return sendMessage(env, chatId, "🔒 Lệnh này chỉ dành cho quản trị viên.");
+  }
+
+  const users = await listUsers(env);
+  const now = Date.now();
+  const day = 86400000;
+
+  const active7 = users.filter((u) => now - (u.last || 0) <= 7 * day).length;
+  const active30 = users.filter((u) => now - (u.last || 0) <= 30 * day).length;
+  const new7 = users.filter((u) => now - (u.first || 0) <= 7 * day).length;
+
+  const appUsers = users.filter((u) => (u.appCount || 0) > 0);
+  const botUsers = users.filter((u) => (u.botCount || 0) > 0);
+  const onlyApp = users.filter(
+    (u) => (u.appCount || 0) > 0 && !(u.botCount || 0)
+  ).length;
+
+  const totalMsg = users.reduce((s, u) => s + (u.count || 0), 0);
+  const totalApp = users.reduce((s, u) => s + (u.appCount || 0), 0);
+
+  const top = users
+    .slice()
+    .sort((a, b) => (b.count || 0) - (a.count || 0))
+    .slice(0, 10);
+
+  const sep = "━━━━━━━━━━━━━━━━━━━";
+  const L = [];
+
+  L.push(sep);
+  L.push("<b>📊 THỐNG KÊ NGƯỜI DÙNG</b>");
+  L.push(sep);
+  L.push(`👥 Tổng số người dùng: <b>${users.length}</b>`);
+  L.push(`🟢 Hoạt động 7 ngày: <b>${active7}</b>`);
+  L.push(`🔵 Hoạt động 30 ngày: <b>${active30}</b>`);
+  L.push(`✨ Người mới 7 ngày: <b>${new7}</b>`);
+  L.push(sep);
+  L.push("<b>📱 THEO CÁCH DÙNG</b>");
+  L.push(`• Đã mở Mini App: <b>${appUsers.length}</b> người`);
+  L.push(`• Đã nhắn tin cho bot: <b>${botUsers.length}</b> người`);
+  L.push(`• Chỉ dùng Mini App: <b>${onlyApp}</b> người`);
+  L.push(sep);
+  L.push("<b>💬 LƯỢT TƯƠNG TÁC</b>");
+  L.push(`• Tổng: <b>${totalMsg}</b>`);
+  L.push(`• Lượt mở Mini App: <b>${totalApp}</b>`);
+
+  if (top.length) {
+    L.push(sep);
+    L.push("<b>🏆 DÙNG NHIỀU NHẤT</b>");
+
+    top.forEach((u, i) => {
+      const who = u.username
+        ? "@" + u.username
+        : escapeHtml(u.name || "ID " + u.id);
+
+      L.push(
+        `${i + 1}. ${who} — <b>${u.count || 0}</b> lượt (app ${u.appCount || 0})`
+      );
+    });
+  }
+
+  L.push(sep);
+  L.push(`<i>🕒 Cập nhật ${nowVN()}</i>`);
+
+  return sendMessage(env, chatId, L.join("\n"), null, "HTML");
+}
+
+/* ===================== LỆNH ===================== */
+
 function isHuongDanCommand(text) {
   const clean = text.replace(/@\w+/g, "");
   return /^\/huongdan$/i.test(clean);
@@ -198,8 +372,14 @@ async function sendHuongDan(env, chatId) {
     "Ví dụ: <code>Cộng thêm: Hoa hồng | 500k</code>",
     "Có thể thêm nhiều dòng <b>Cộng thêm</b> khác nhau.",
     "",
-    "<b>5. Cách bot tính lương</b>",
-    "• Ngày làm việc = số ngày trong tháng − số ngày Chủ nhật",
+    "<b>5. Lịch nghỉ hàng tuần</b>",
+    "Mặc định bot chỉ trừ Chủ nhật.",
+    "Nếu công ty nghỉ cả Thứ 7, thêm dòng <code>Nghỉ thứ 7: có</code>.",
+    "Lịch nghỉ đặc biệt (T7 cách tuần, nghỉ lễ dài) thì ấn định thẳng:",
+    "<code>Ngày làm việc: 23</code>",
+    "",
+    "<b>6. Cách bot tính lương</b>",
+    "• Ngày làm việc = số ngày trong tháng − ngày nghỉ tuần",
     "• Lương / ngày = lương cơ bản ÷ ngày làm việc",
     "• Lương ngày công = lương / ngày × ngày công thực tế",
     "• Phụ cấp trách nhiệm = hệ số × lương ngày công",
@@ -227,6 +407,7 @@ async function sendSalaryTemplate(env, chatId, month) {
     "Tháng: " + month,
     "Lương cơ bản:",
     "Ngày công:",
+    "Nghỉ thứ 7: không",
     "Hệ số trách nhiệm:",
     "Tiền ăn 1 buổi:",
     "Trợ cấp:",
@@ -242,7 +423,7 @@ async function sendSalaryTemplate(env, chatId, month) {
 
   const text = [
     `<b>📌 TÍNH LƯƠNG THÁNG ${pad2(month)}/${year}</b>`,
-    `Tháng này có <b>${info.totalDays} ngày</b> · <b>${info.sundayCount} ngày Chủ nhật</b> · <b>${info.workingDays} ngày làm việc</b>`,
+    `Tháng này có <b>${info.totalDays} ngày</b> · <b>${info.sundayCount} Chủ nhật</b> · <b>${info.saturdayCount} Thứ 7</b>`,
     "",
     "Bấm vào khối dưới để copy → điền số vào sau dấu hai chấm → gửi lại cho mình.",
     "<b>Dòng nào không điền thì mặc định là 0.</b>",
@@ -250,20 +431,24 @@ async function sendSalaryTemplate(env, chatId, month) {
     "<b>💡 Giải thích</b>",
     "• <b>Lương cơ bản</b> — lương 1 tháng ghi trên hợp đồng",
     "• <b>Ngày công</b> — số ngày bạn thực tế đi làm trong tháng",
+    "• <b>Nghỉ thứ 7</b> — ghi <code>có</code> nếu nghỉ cả T7, ghi <code>không</code> nếu vẫn làm",
     "• <b>Hệ số trách nhiệm</b> — ví dụ 0.03, không có thì để trống",
     "• <b>Tiền ăn 1 buổi</b> — bot tự nhân với số ngày công",
     "• <b>Cộng thêm</b> — khoản tự đặt tên, viết <code>Tên khoản | Số tiền</code>",
-    "  Ví dụ <code>Cộng thêm: Hoa hồng | 500k</code>",
-    "  Thêm được nhiều dòng, khoản nào để 0 hoặc xoá đi thì bỏ qua",
+    "  Ví dụ <code>Cộng thêm: Hoa hồng | 500k</code>, thêm được nhiều dòng",
     "",
     "<b>Số tiền viết kiểu nào cũng hiểu</b>",
     "<code>9tr</code> · <code>1tr2</code> · <code>500k</code> · <code>1200000</code> · <code>1.200.000</code>",
+    "",
+    "Lịch nghỉ đặc biệt? Thêm dòng <code>Ngày làm việc: 23</code> để tự ấn định.",
     "",
     "🧮 Không muốn gõ? Bấm nút dưới để nhập trên Mini App.",
   ].join("\n");
 
   return sendMessage(env, chatId, text, miniAppKeyboard(env), "HTML");
 }
+
+/* ===================== ĐỌC DỮ LIỆU ===================== */
 
 const KEY_MAP = {
   thang: "luongthang",
@@ -279,6 +464,13 @@ const KEY_MAP = {
   ngay_cong_thuc_te: "ngay_cong",
   so_ngay_cong: "ngay_cong",
   ngay_di_lam: "ngay_cong",
+
+  nghi_thu_7: "nghi_thu_7",
+  nghi_t7: "nghi_thu_7",
+  co_nghi_thu_7: "nghi_thu_7",
+
+  ngay_lam_viec: "ngay_lam_viec",
+  so_ngay_lam_viec: "ngay_lam_viec",
 
   he_so_trach_nhiem: "he_so_trach_nhiem",
   he_so: "he_so_trach_nhiem",
@@ -321,6 +513,12 @@ function normalizeKey(raw) {
 function canonicalKey(raw) {
   const k = normalizeKey(raw);
   return KEY_MAP[k] || k;
+}
+
+function parseYesNo(raw) {
+  const s = normalizeKey(raw || "");
+  if (!s) return false;
+  return ["co", "yes", "y", "true", "1", "x", "ok", "dung"].includes(s);
 }
 
 function looksLikeSalaryForm(text) {
@@ -370,6 +568,9 @@ function parseSalaryForm(text) {
     baseSalary: parseMoney(map.luong_co_ban) || 0,
     actualDays: parseNumber(map.ngay_cong) || 0,
 
+    saturdayOff: parseYesNo(map.nghi_thu_7),
+    workingDaysOverride: parseNumber(map.ngay_lam_viec) || 0,
+
     responsibilityCoef: parseNumber(map.he_so_trach_nhiem) || 0,
 
     mealPerDay: parseMoney(map.tien_an_1_buoi) || 0,
@@ -403,6 +604,26 @@ async function handleMiniAppData(chatId, rawData, env) {
   return sendMessage(env, chatId, formatSalaryResult(result), null, "HTML");
 }
 
+async function handleMiniAppOpen(request, env) {
+  let body;
+
+  try {
+    body = await request.json();
+  } catch (err) {
+    return jsonResponse({ ok: false, error: "Invalid JSON" }, 400);
+  }
+
+  const from = body.user || {};
+
+  if (!from.id) {
+    return jsonResponse({ ok: false, error: "Missing user" }, 400);
+  }
+
+  await trackFrom(env, from, "miniapp");
+
+  return jsonResponse({ ok: true });
+}
+
 async function handleMiniAppPost(request, env) {
   let body;
 
@@ -432,6 +653,9 @@ async function handleMiniAppPost(request, env) {
   }
 
   const data = body.data || body;
+
+  await trackFrom(env, user, "miniapp");
+
   const input = normalizeMiniAppInput(data);
   const result = calculateSalary(input);
 
@@ -446,6 +670,9 @@ function normalizeMiniAppInput(data) {
   return {
     month: Number(data.month || getCurrentMonthVN()),
     year: Number(data.year || getCurrentYearVN()),
+
+    saturdayOff: data.cheDo === "cn_t7",
+    workingDaysOverride: Number(data.ngayLV || 0),
 
     baseSalary: Number(data.baseSalary || data.lcb || 0),
     actualDays: Number(data.actualDays || data.nc || 0),
@@ -468,9 +695,17 @@ function normalizeMiniAppInput(data) {
   };
 }
 
+/* ===================== TÍNH LƯƠNG ===================== */
+
 function calculateSalary(input) {
   const year = Number(input.year) || getCurrentYearVN();
-  const workingInfo = getWorkingInfo(year, input.month);
+
+  const workingInfo = getWorkingInfo(
+    year,
+    input.month,
+    input.saturdayOff,
+    input.workingDaysOverride
+  );
 
   const baseSalary = input.baseSalary || 0;
   const actualDays = input.actualDays || 0;
@@ -481,7 +716,7 @@ function calculateSalary(input) {
   const salaryByDay = Math.round(salaryPerDay * actualDays);
 
   // Mức cơ sở tính trách nhiệm
-  // = lương cơ bản ÷ ngày làm việc (đã trừ chủ nhật) × ngày công thực tế
+  // = lương cơ bản ÷ ngày làm việc × ngày công thực tế
   const responsibilityBase = salaryByDay;
   const responsibilityCoef = Number(input.responsibilityCoef || 0);
   const responsibility = Math.round(responsibilityBase * responsibilityCoef);
@@ -516,7 +751,11 @@ function calculateSalary(input) {
 
     totalDays: workingInfo.totalDays,
     sundayCount: workingInfo.sundayCount,
+    saturdayCount: workingInfo.saturdayCount,
+    saturdayOff: workingInfo.saturdayOff,
     workingDays: workingInfo.workingDays,
+    offDays: workingInfo.offDays,
+    customDays: workingInfo.customDays,
 
     actualDays,
 
@@ -549,19 +788,35 @@ function calculateSalary(input) {
   };
 }
 
-function getWorkingInfo(year, month) {
+function getWorkingInfo(year, month, saturdayOff, override) {
   const totalDays = new Date(year, month, 0).getDate();
+
   let sundayCount = 0;
+  let saturdayCount = 0;
 
   for (let day = 1; day <= totalDays; day++) {
-    const d = new Date(year, month - 1, day);
-    if (d.getDay() === 0) sundayCount++;
+    const w = new Date(year, month - 1, day).getDay();
+
+    if (w === 0) sundayCount++;
+    else if (w === 6) saturdayCount++;
   }
+
+  const auto = saturdayOff
+    ? totalDays - sundayCount - saturdayCount
+    : totalDays - sundayCount;
+
+  const ov = Number(override || 0);
+  const useOverride = ov > 0 && ov <= totalDays && ov !== auto;
+  const workingDays = useOverride ? ov : auto;
 
   return {
     totalDays,
     sundayCount,
-    workingDays: totalDays - sundayCount,
+    saturdayCount,
+    saturdayOff: Boolean(saturdayOff),
+    workingDays,
+    offDays: totalDays - workingDays,
+    customDays: useOverride,
   };
 }
 
@@ -587,13 +842,24 @@ function formatSalaryResult(r) {
 
   L.push("<b>📅 NGÀY CÔNG</b>");
   L.push(`• Số ngày trong tháng: <b>${r.totalDays} ngày</b>`);
-  L.push(`• Ngày chủ nhật: <b>${r.sundayCount} ngày</b>`);
+
+  if (r.customDays) {
+    L.push(`• Ngày nghỉ: <b>${r.offDays} ngày</b> (tự ấn định)`);
+  } else if (r.saturdayOff) {
+    L.push(
+      `• Ngày nghỉ tuần: <b>${r.sundayCount} CN + ${r.saturdayCount} T7</b>`
+    );
+  } else {
+    L.push(`• Ngày chủ nhật: <b>${r.sundayCount} ngày</b>`);
+  }
+
   L.push(`• Ngày làm việc: <b>${r.workingDays} ngày</b>`);
   L.push(`• Ngày công thực tế: <b>${r.actualDays} ngày</b>`);
 
   L.push("<b>💵 CĂN CỨ TÍNH LƯƠNG</b>");
   L.push(`• Lương cơ bản / tháng: <b>${fmt(r.baseSalary)}</b>`);
   L.push(`• Lương / ngày: <b>${fmt(r.salaryPerDay)}</b>`);
+
   if (r.responsibilityCoef) {
     L.push(
       `• Hệ số trách nhiệm: <b>${r.responsibilityCoef}</b> × lương ngày công ${fmt(
@@ -601,6 +867,7 @@ function formatSalaryResult(r) {
       )}`
     );
   }
+
   if (r.mealPerDay) {
     L.push(`• Tiền ăn 1 buổi: <b>${fmt(r.mealPerDay)}</b>`);
   }
@@ -609,12 +876,15 @@ function formatSalaryResult(r) {
   L.push(
     `• Lương ngày công (${r.actualDays} ngày): <b>${fmt(r.salaryByDay)}</b>`
   );
+
   if (r.responsibility) {
     L.push(`• Phụ cấp trách nhiệm: <b>${fmt(r.responsibility)}</b>`);
   }
+
   if (r.meal) {
     L.push(`• Tiền ăn (${r.actualDays} buổi): <b>${fmt(r.meal)}</b>`);
   }
+
   if (r.allowance) L.push(`• Trợ cấp: <b>${fmt(r.allowance)}</b>`);
   if (r.businessFee) L.push(`• Công tác phí: <b>${fmt(r.businessFee)}</b>`);
   if (r.bonus) L.push(`• Thưởng nóng: <b>${fmt(r.bonus)}</b>`);
@@ -632,6 +902,7 @@ function formatSalaryResult(r) {
   L.push(`▸ <b>Tổng thu nhập: ${fmt(r.plus)}</b>`);
 
   L.push("<b>➖ CÁC KHOẢN TRỪ</b>");
+
   if (r.minus > 0) {
     if (r.latePenalty) L.push(`• Đi muộn: <b>${fmt(r.latePenalty)}</b>`);
     if (r.penalty) L.push(`• Phạt: <b>${fmt(r.penalty)}</b>`);
@@ -639,6 +910,7 @@ function formatSalaryResult(r) {
   } else {
     L.push("• Không có khoản trừ");
   }
+
   L.push(`▸ <b>Tổng khoản trừ: ${fmt(r.minus)}</b>`);
 
   L.push(sep);
@@ -649,6 +921,8 @@ function formatSalaryResult(r) {
 
   return L.join("\n");
 }
+
+/* ===================== TIỆN ÍCH ===================== */
 
 function parseMoney(raw) {
   if (raw == null) return 0;
@@ -787,37 +1061,4 @@ async function setMenuButton(env) {
   });
 
   const text = await res.text();
-  console.log("setChatMenuButton status:", res.status);
-  console.log("setChatMenuButton response:", text);
-}
-
-async function sendMessage(env, chatId, text, replyMarkup, parseMode) {
-  if (!env.BOT_TOKEN) {
-    console.log("ERROR: BOT_TOKEN is missing");
-    return;
-  }
-
-  const payload = {
-    chat_id: chatId,
-    text,
-    disable_web_page_preview: true,
-  };
-
-  if (replyMarkup) payload.reply_markup = replyMarkup;
-  if (parseMode) payload.parse_mode = parseMode;
-
-  const url = "https://api.telegram.org/bot" + env.BOT_TOKEN + "/sendMessage";
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  const responseText = await res.text();
-
-  console.log("Telegram sendMessage status:", res.status);
-  console.log("Telegram sendMessage response:", responseText);
-}
+  console.log("setChatMenuButton status:", res
