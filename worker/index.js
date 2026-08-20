@@ -381,18 +381,47 @@ async function sendHuongDan(env, chatId) {
     "Nghỉ phép, việc riêng thì thêm <code>Nghỉ thêm: 2</code>.",
     "Muốn chắc ăn thì cứ điền thẳng số vào <b>Ngày công</b>, bot ưu tiên con số bạn ghi.",
     "",
-    "<b>6. Cách bot tính lương</b>",
-    "• Ngày tính lương = số ngày trong tháng − số Chủ nhật (luôn cố định)",
-    "• Lương / ngày = lương cơ bản ÷ ngày tính lương",
-    "• Lương ngày công = lương / ngày × ngày công thực tế",
-    "• Phụ cấp trách nhiệm = hệ số × lương ngày công",
+    sep,
+    "<b>🧮 6. CÁCH TÍNH LƯƠNG</b>",
+    sep,
+    "<b>Bước 1 — Đếm ngày trong tháng</b>",
+    "Bot đếm chính xác tháng đó có bao nhiêu ngày, bao nhiêu <b>Chủ nhật</b>, bao nhiêu <b>Thứ 7</b>.",
+    "",
+    "<b>Bước 2 — Tìm số ngày tính lương (mẫu số)</b>",
+    "<code>Ngày tính lương = số ngày trong tháng − số Chủ nhật</code>",
+    "⚠️ <b>Thứ 7 vẫn nằm trong mẫu số</b>, kể cả khi bạn nghỉ Thứ 7. Con số này <b>không đổi</b> theo lịch nghỉ của bạn.",
+    "",
+    "<b>Bước 3 — Lương một ngày</b>",
+    "<code>Lương / ngày = lương cơ bản ÷ ngày tính lương</code>",
+    "",
+    "<b>Bước 4 — Lương theo ngày công</b>",
+    "<code>Lương ngày công = lương / ngày × ngày công thực tế</code>",
+    "",
+    "<b>Bước 5 — Các khoản còn lại</b>",
+    "• Phụ cấp trách nhiệm = hệ số × <b>lương ngày công</b>",
     "• Tiền ăn = tiền ăn 1 buổi × ngày công thực tế",
     "• Thực nhận = tổng khoản cộng − tổng khoản trừ",
     "",
-    "<b>Ví dụ tháng 11/2025</b>",
-    "30 ngày − 5 Chủ nhật = <b>25 ngày tính lương</b>",
-    "Lương cơ bản 9tr → lương / ngày = <b>360.000 ₫</b>",
-    "Nghỉ T7 + CN, đi đủ 20 ngày → 360.000 × 20 = <b>7.200.000 ₫</b>",
+    sep,
+    "<b>📎 VÍ DỤ THÁNG 11/2025</b>",
+    sep,
+    "Tháng 11/2025 có <b>30 ngày</b>: <b>5 Chủ nhật</b> · <b>5 Thứ 7</b>",
+    "① Ngày tính lương = 30 − 5 = <b>25 ngày</b>",
+    "② Lương cơ bản <b>9.000.000 ₫</b> ÷ 25 = <b>360.000 ₫ / ngày</b>",
+    "",
+    "<b>▸ Nếu chỉ nghỉ Chủ nhật</b>",
+    "Đi đủ <b>25 ngày</b> → 360.000 × 25 = <b>9.000.000 ₫</b>",
+    "",
+    "<b>▸ Nếu nghỉ Thứ 7 + Chủ nhật</b>",
+    "Đi đủ <b>20 ngày</b> (25 − 5 Thứ 7) → 360.000 × 20 = <b>7.200.000 ₫</b>",
+    "",
+    "👉 Nghỉ 5 ngày Thứ 7 làm lương giảm 5 × 360.000 = <b>1.800.000 ₫</b>, vì mẫu số vẫn giữ 25 ngày.",
+    "",
+    "<b>▸ Nếu Thứ 7 nghỉ cách tuần</b>",
+    "Nghỉ 3 Thứ 7 → đi <b>22 ngày</b> → 360.000 × 22 = <b>7.920.000 ₫</b>",
+    "",
+    "<b>▸ Nếu còn nghỉ phép 2 ngày</b>",
+    "Ví dụ nghỉ CN + phép 2 ngày → đi <b>23 ngày</b> → 360.000 × 23 = <b>8.280.000 ₫</b>",
     "",
     sep,
     "<b>📋 DANH SÁCH LỆNH</b>",
@@ -452,6 +481,7 @@ async function sendSalaryTemplate(env, chatId, month) {
     "<code>9tr</code> · <code>1tr2</code> · <code>500k</code> · <code>1200000</code> · <code>1.200.000</code>",
     "",
     `<b>Cách tính</b> — lương cơ bản ÷ <b>${info.payDays}</b> ngày tính lương × ngày công thực tế.`,
+    `<i>Mẫu số ${info.payDays} = ${info.totalDays} ngày − ${info.sundayCount} Chủ nhật. ${info.saturdayCount} ngày Thứ 7 vẫn nằm trong mẫu số, nghỉ Thứ 7 thì Thứ 7 không được tính lương.</i>`,
     "",
     "🧮 Không muốn gõ? Bấm nút dưới để nhập trên Mini App.",
   ].join("\n");
@@ -883,7 +913,10 @@ function formatSalaryResult(r) {
   L.push("<b>📅 NGÀY CÔNG</b>");
   L.push(`• Số ngày trong tháng: <b>${r.totalDays} ngày</b>`);
   L.push(`• Ngày Chủ nhật: <b>${r.sundayCount} ngày</b>`);
-  L.push(`• Ngày tính lương: <b>${r.payDays} ngày</b>`);
+  L.push(`• Ngày Thứ 7: <b>${r.saturdayCount} ngày</b>`);
+  L.push(
+    `• Ngày tính lương: <b>${r.payDays} ngày</b> (${r.totalDays} − ${r.sundayCount} CN)`
+  );
   L.push(`• Lịch nghỉ: <b>${tenLich(r.lich)}</b>`);
 
   if (r.extraOff) {
