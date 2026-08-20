@@ -100,10 +100,29 @@ input[type=number]{-moz-appearance:textfield}
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 
-.wk-note{margin-top:11px;border-radius:12px;padding:10px 12px;background:rgba(59,130,246,.09);color:var(--hint);font-size:12.2px;line-height:1.62}
+.wk-note{margin-top:12px;border:1px solid rgba(59,130,246,.18);border-radius:14px;padding:12px 13px;background:rgba(59,130,246,.07);color:var(--hint);font-size:12.4px;line-height:1.55}
 .wk-note b{color:var(--text);font-variant-numeric:tabular-nums}
-.wk-warn{display:block;margin-top:8px;padding-top:8px;border-top:1px dashed rgba(59,130,246,.28);color:#b45309;font-size:11.6px;line-height:1.55}
-.wk-warn b{color:#92400e}
+.calc-lb{display:flex;align-items:center;gap:6px;margin-bottom:10px;color:var(--text);font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+.cs{display:flex;gap:9px;padding:7px 0;border-bottom:1px dashed rgba(59,130,246,.18)}
+.cs:last-of-type{border-bottom:0}
+.cs-n{flex:none;width:20px;height:20px;border-radius:6px;background:rgba(59,130,246,.16);color:var(--accent);font-size:11px;font-weight:900;text-align:center;line-height:20px}
+.cs-b{flex:1;min-width:0}
+.cs-t{color:var(--hint)}
+.cs-r{margin-top:2px;color:var(--text);font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+.cs-r em{color:var(--hint);font-size:11.5px;font-weight:500;font-style:normal}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.tags i{border-radius:6px;padding:2px 7px;background:rgba(59,130,246,.12);color:var(--accent);font-size:11px;font-weight:700;font-style:normal;font-variant-numeric:tabular-nums}
+.cs-final .cs-n{background:rgba(22,163,74,.16);color:var(--ok)}
+.cs-final .cs-r{color:var(--ok);font-size:15px;font-weight:900}
+.wk-warn{display:block;margin-top:10px;border-radius:11px;padding:9px 11px;background:rgba(245,158,11,.14);color:#b45309;font-size:11.7px;line-height:1.5}
+.wk-warn b{color:#92400e;font-variant-numeric:tabular-nums}
+.vd{margin-top:10px}
+.vd summary{cursor:pointer;list-style:none;color:var(--accent);font-size:11.8px;font-weight:800}
+.vd summary::-webkit-details-marker{display:none}
+.vd[open] summary::after{content:" ▴"}
+.vd:not([open]) summary::after{content:" ▾"}
+.vd-b{margin-top:8px;border-left:3px solid rgba(59,130,246,.3);padding-left:10px;color:var(--hint);font-size:11.8px;line-height:1.72}
+.vd-b b{color:var(--text);font-variant-numeric:tabular-nums}
 
 .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start;margin-top:14px}
 @media (max-width:760px){
@@ -758,27 +777,76 @@ function animate(to) {
 }
 
 function capNhatWkNote(r) {
-  var html =
-    "Đang áp dụng: <b>" + tenCheDo(cheDo) + "</b>" +
-    (cheDo !== "tu" && r.nghiThem ? " · nghỉ thêm <b>" + r.nghiThem + "</b> ngày" : "") +
-    "<br>Lương / ngày = " + fmt(r.lcb) + " ÷ <b>" + r.ngayTinhLuong +
-    "</b> ngày tính lương = <b>" + fmt(r.luongNgay) + "</b>" +
-    "<br>Lương ngày công = " + fmt(r.luongNgay) + " × <b>" + r.nc +
-    "</b> ngày = <b>" + fmt(r.luongNgayCong) + "</b>";
+  var thang = parseInt(r.thang.slice(5), 10);
+  var nam = r.thang.slice(0, 4);
+  var ngayThuong = r.tongNgay - r.cn - r.t7;
 
-  if (cheDo === "cn_t7" || cheDo === "cn_t7x") {
+  var html = '<div class="calc-lb">🧮 Cách tính lương tháng này</div>';
+
+  html +=
+    '<div class="cs"><span class="cs-n">1</span><div class="cs-b">' +
+      '<div class="cs-t">Tháng ' + thang + '/' + nam + ' có tất cả</div>' +
+      '<div class="cs-r">' + r.tongNgay + ' ngày</div>' +
+      '<div class="tags">' +
+        '<i>' + r.cn + ' Chủ nhật</i>' +
+        '<i>' + r.t7 + ' Thứ 7</i>' +
+        '<i>' + ngayThuong + ' ngày T2–T6</i>' +
+      '</div>' +
+    '</div></div>';
+
+  html +=
+    '<div class="cs"><span class="cs-n">2</span><div class="cs-b">' +
+      '<div class="cs-t">Ngày tính lương = tổng ngày − Chủ nhật</div>' +
+      '<div class="cs-r">' + r.tongNgay + ' − ' + r.cn + ' = ' + r.ngayTinhLuong + ' ngày ' +
+        '<em>(Thứ 7 vẫn nằm trong mẫu số)</em></div>' +
+    '</div></div>';
+
+  html +=
+    '<div class="cs"><span class="cs-n">3</span><div class="cs-b">' +
+      '<div class="cs-t">Lương / ngày = lương cơ bản ÷ ' + r.ngayTinhLuong + ' ngày</div>' +
+      '<div class="cs-r">' + fmt(r.lcb) + ' ÷ ' + r.ngayTinhLuong + ' = ' + fmt(r.luongNgay) + '</div>' +
+    '</div></div>';
+
+  var moTa = "đang áp dụng: " + tenCheDo(cheDo);
+  if (cheDo !== "tu" && r.nghiThem) moTa += ", nghỉ thêm " + r.nghiThem + " ngày";
+
+  html +=
+    '<div class="cs"><span class="cs-n">4</span><div class="cs-b">' +
+      '<div class="cs-t">Ngày công thực tế <em>(' + moTa + ')</em></div>' +
+      '<div class="cs-r">' + r.nc + ' ngày</div>' +
+    '</div></div>';
+
+  html +=
+    '<div class="cs cs-final"><span class="cs-n">5</span><div class="cs-b">' +
+      '<div class="cs-t">Lương theo ngày công</div>' +
+      '<div class="cs-r">' + fmt(r.luongNgay) + ' × ' + r.nc + ' = ' + fmt(r.luongNgayCong) + '</div>' +
+    '</div></div>';
+
+  if (r.t7Nghi > 0) {
+    var duNhat = r.luongNgay * r.ngayTinhLuong;
+
     html +=
-      '<span class="wk-warn">⚠️ Mẫu số vẫn là <b>' + r.ngayTinhLuong +
-      " ngày</b> (" + r.tongNgay + " ngày − " + r.cn + " Chủ nhật). Nghỉ <b>" +
-      r.t7Nghi + " ngày Thứ 7</b> nên <b>Thứ 7 không được tính lương</b>, " +
-      "lương giảm " + fmt(r.luongNgay * r.t7Nghi) + " so với đi làm cả Thứ 7.</span>";
+      '<div class="wk-warn">⚠️ Bạn nghỉ <b>' + r.t7Nghi + ' ngày Thứ 7</b> nhưng mẫu số vẫn là <b>' +
+      r.ngayTinhLuong + ' ngày</b>, nên <b>Thứ 7 không được tính lương</b>. So với đi làm đủ ' +
+      r.ngayTinhLuong + ' ngày (' + fmt(duNhat) + '), lương giảm <b>' +
+      fmt(r.luongNgay * r.t7Nghi) + '</b>.</div>';
   }
 
   if (cheDo === "tu") {
     html +=
-      '<span class="wk-warn">Bạn đang tự nhập ngày công. Mẫu số chia lương vẫn giữ <b>' +
-      r.ngayTinhLuong + " ngày</b> (" + r.tongNgay + " ngày − " + r.cn + " Chủ nhật).</span>";
+      '<div class="wk-warn">Bạn đang tự nhập ngày công. Mẫu số chia lương vẫn giữ <b>' +
+      r.ngayTinhLuong + ' ngày</b> (' + r.tongNgay + ' ngày − ' + r.cn + ' Chủ nhật).</div>';
   }
+
+  html +=
+    '<details class="vd"><summary>Xem ví dụ tháng 11/2025</summary><div class="vd-b">' +
+      'Tháng 11/2025 có <b>30 ngày</b>: <b>5 Chủ nhật</b> · <b>5 Thứ 7</b><br>' +
+      'Ngày tính lương = 30 − 5 = <b>25 ngày</b><br>' +
+      'Lương cơ bản <b>9.000.000 ₫</b> ÷ 25 = <b>360.000 ₫ / ngày</b><br>' +
+      '• Nghỉ Chủ nhật, đi đủ <b>25 ngày</b> → 360.000 × 25 = <b>9.000.000 ₫</b><br>' +
+      '• Nghỉ Thứ 7 + Chủ nhật, đi đủ <b>20 ngày</b> → 360.000 × 20 = <b>7.200.000 ₫</b><br>' +
+      'Nghỉ Thứ 7 làm mất 5 × 360.000 = <b>1.800.000 ₫</b>.' +
+    '</div></details>';
 
   $("#wkNote").innerHTML = html;
 }
